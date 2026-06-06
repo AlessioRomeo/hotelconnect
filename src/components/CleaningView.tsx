@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRooms } from "@/hooks/useRooms";
 import { useTick } from "@/hooks/useTick";
 import { STATUS_META } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
 import type { Room, RoomStatus } from "@/lib/types";
 import { Toast } from "./Toast";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 // Cleaners only care about rooms that still need attention.
 const NEEDS_WORK: RoomStatus[] = ["da_pulire", "in_pulizia"];
@@ -32,6 +33,9 @@ function cleaningSort(a: Room, b: Room): number {
 export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
   const { rooms, loading, updateRoom, saveError, dismissSaveError } = useRooms(true);
   const now = useTick(60_000);
+  // Room awaiting a "mark clean" confirmation (marking clean removes it from
+  // the list, so we guard against accidental taps).
+  const [pendingClean, setPendingClean] = useState<Room | null>(null);
 
   const todo = useMemo(
     () => rooms.filter((r) => NEEDS_WORK.includes(r.status)).sort(cleaningSort),
@@ -41,6 +45,11 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
   // updateRoom enforces "clean ⇒ not urgent" centrally, so we just set status.
   const setStatus = (room: Room, status: RoomStatus) => {
     updateRoom(room.id, { status }, "pulizie");
+  };
+
+  const confirmClean = () => {
+    if (pendingClean) setStatus(pendingClean, "pulita");
+    setPendingClean(null);
   };
 
   return (
@@ -81,11 +90,22 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
                 room={room}
                 now={now}
                 onSetStatus={setStatus}
+                onRequestClean={setPendingClean}
               />
             ))}
           </div>
         )}
       </main>
+
+      {pendingClean && (
+        <ConfirmDialog
+          title={`Segnare la camera ${pendingClean.name} come pulita?`}
+          message="Sparirà dalla lista delle pulizie."
+          confirmLabel="Sì, è pulita"
+          onConfirm={confirmClean}
+          onCancel={() => setPendingClean(null)}
+        />
+      )}
 
       {saveError && <Toast message={saveError} onDismiss={dismissSaveError} />}
     </div>
@@ -96,9 +116,10 @@ interface CleaningCardProps {
   room: Room;
   now: number;
   onSetStatus: (room: Room, status: RoomStatus) => void;
+  onRequestClean: (room: Room) => void;
 }
 
-function CleaningCard({ room, now, onSetStatus }: CleaningCardProps) {
+function CleaningCard({ room, now, onSetStatus, onRequestClean }: CleaningCardProps) {
   const meta = STATUS_META[room.status];
   const inProgress = room.status === "in_pulizia";
 
@@ -145,7 +166,7 @@ function CleaningCard({ room, now, onSetStatus }: CleaningCardProps) {
         <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => onSetStatus(room, "pulita")}
+            onClick={() => onRequestClean(room)}
             className="flex h-14 items-center justify-center rounded-2xl bg-emerald-600 text-lg font-semibold text-white transition active:scale-[0.98] hover:bg-emerald-700"
           >
             Segna pulita
@@ -169,7 +190,7 @@ function CleaningCard({ room, now, onSetStatus }: CleaningCardProps) {
           </button>
           <button
             type="button"
-            onClick={() => onSetStatus(room, "pulita")}
+            onClick={() => onRequestClean(room)}
             className="flex h-14 flex-1 items-center justify-center rounded-2xl border border-emerald-600 bg-white text-base font-semibold text-emerald-700 transition active:scale-[0.98] hover:bg-emerald-50"
           >
             Pulita
