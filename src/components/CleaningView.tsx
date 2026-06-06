@@ -99,7 +99,7 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
 
       {pendingClean && (
         <ConfirmDialog
-          title={`Segnare la camera ${pendingClean.name} come pulita?`}
+          title={`Vuoi davvero segnare la camera ${pendingClean.name} come pulita?`}
           message="Sparirà dalla lista delle pulizie."
           confirmLabel="Sì, è pulita"
           onConfirm={confirmClean}
