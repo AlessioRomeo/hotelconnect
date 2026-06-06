@@ -11,6 +11,7 @@
 // secret). Do not paste it into any committed file.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws"; // Node < 22 has no native WebSocket; createClient needs it.
 
 // Minimal .env.local parser (no dependency), same as realtime-test.mjs.
 const env = Object.fromEntries(
@@ -47,6 +48,7 @@ for (const t of targets) {
 
 const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
+  realtime: { transport: ws },
 });
 
 async function findUserId(email) {
