@@ -1,0 +1,139 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRooms } from "@/hooks/useRooms";
+import { useTick } from "@/hooks/useTick";
+import type { Room, RoomStatus } from "@/lib/types";
+import { RoomCard } from "./RoomCard";
+import { RoomSheet } from "./RoomSheet";
+
+type FilterKey = "all" | RoomStatus | "urgent";
+
+const FILTERS: { key: FilterKey; label: string; dot?: string }[] = [
+  { key: "all", label: "Tutte" },
+  { key: "da_pulire", label: "Da pulire", dot: "bg-amber-500" },
+  { key: "in_pulizia", label: "In pulizia", dot: "bg-blue-500" },
+  { key: "pulita", label: "Pulite", dot: "bg-emerald-500" },
+  { key: "urgent", label: "Urgenti", dot: "bg-red-500" },
+];
+
+export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
+  const { rooms, loading, updateRoom } = useRooms(true);
+  const now = useTick(60_000);
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const counts = useMemo(() => {
+    const by = { all: rooms.length, urgent: 0, pulita: 0, da_pulire: 0, in_pulizia: 0 };
+    for (const r of rooms) {
+      by[r.status]++;
+      if (r.urgent) by.urgent++;
+    }
+    return by as Record<FilterKey, number>;
+  }, [rooms]);
+
+  const matches = (r: Room) =>
+    filter === "all" ? true : filter === "urgent" ? r.urgent : r.status === filter;
+
+  const hotel = rooms.filter((r) => r.room_group === "hotel" && matches(r));
+  const bnb = rooms.filter((r) => r.room_group === "bnb" && matches(r));
+  const selected = selectedId ? rooms.find((r) => r.id === selectedId) ?? null : null;
+
+  return (
+    <div className="flex flex-1 flex-col bg-zinc-50 text-zinc-900">
+      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
+          <div>
+            <h1 className="text-lg font-semibold leading-tight">Camere</h1>
+            <p className="text-xs text-zinc-500">Reception</p>
+          </div>
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="rounded-full border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"
+          >
+            Esci
+          </button>
+        </div>
+
+        <div className="mx-auto w-full max-w-5xl">
+          <div className="flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {FILTERS.map((f) => {
+              const active = filter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilter(f.key)}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                    active
+                      ? "bg-zinc-900 text-white"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                  }`}
+                >
+                  {f.dot && <span className={`h-2 w-2 rounded-full ${f.dot}`} />}
+                  {f.label}
+                  <span className={active ? "text-white/70" : "text-zinc-400"}>
+                    {counts[f.key]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5">
+        {loading ? (
+          <p className="py-20 text-center text-zinc-400">Caricamento camere…</p>
+        ) : hotel.length === 0 && bnb.length === 0 ? (
+          <p className="py-20 text-center text-zinc-400">
+            Nessuna camera in questa categoria.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-7">
+            <Section title="Hotel" rooms={hotel} now={now} onSelect={(r) => setSelectedId(r.id)} />
+            <Section title="B&B" rooms={bnb} now={now} onSelect={(r) => setSelectedId(r.id)} />
+          </div>
+        )}
+      </main>
+
+      {selected && (
+        <RoomSheet
+          key={selected.id}
+          room={selected}
+          now={now}
+          onClose={() => setSelectedId(null)}
+          onUpdate={(patch) => updateRoom(selected.id, patch, "reception")}
+        />
+      )}
+    </div>
+  );
+}
+
+function Section({
+  title,
+  rooms,
+  now,
+  onSelect,
+}: {
+  title: string;
+  rooms: Room[];
+  now: number;
+  onSelect: (room: Room) => void;
+}) {
+  if (rooms.length === 0) return null;
+  return (
+    <section>
+      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+        {title}
+        <span className="font-normal text-zinc-400">{rooms.length}</span>
+      </h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        {rooms.map((r) => (
+          <RoomCard key={r.id} room={r} now={now} onSelect={onSelect} />
+        ))}
+      </div>
+    </section>
+  );
+}
