@@ -6,6 +6,7 @@ import { useTick } from "@/hooks/useTick";
 import type { Room, RoomStatus } from "@/lib/types";
 import { RoomCard } from "./RoomCard";
 import { RoomSheet } from "./RoomSheet";
+import { Toast } from "./Toast";
 
 type FilterKey = "all" | RoomStatus | "urgent";
 
@@ -18,7 +19,7 @@ const FILTERS: { key: FilterKey; label: string; dot?: string }[] = [
 ];
 
 export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
-  const { rooms, loading, updateRoom } = useRooms(true);
+  const { rooms, loading, updateRoom, saveError, dismissSaveError } = useRooms(true);
   const now = useTick(60_000);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -107,6 +108,8 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
           onUpdate={(patch) => updateRoom(selected.id, patch, "reception")}
         />
       )}
+
+      {saveError && <Toast message={saveError} onDismiss={dismissSaveError} />}
     </div>
   );
 }

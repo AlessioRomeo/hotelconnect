@@ -6,6 +6,7 @@ import { useTick } from "@/hooks/useTick";
 import { STATUS_META } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
 import type { Room, RoomStatus } from "@/lib/types";
+import { Toast } from "./Toast";
 
 // Cleaners only care about rooms that still need attention.
 const NEEDS_WORK: RoomStatus[] = ["da_pulire", "in_pulizia"];
@@ -29,7 +30,7 @@ function cleaningSort(a: Room, b: Room): number {
 // list of rooms to do, each with large one-tap buttons. Built for one-handed
 // use on a phone, but scales up to a grid on tablet/desktop.
 export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
-  const { rooms, loading, updateRoom } = useRooms(true);
+  const { rooms, loading, updateRoom, saveError, dismissSaveError } = useRooms(true);
   const now = useTick(60_000);
 
   const todo = useMemo(
@@ -37,11 +38,9 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
     [rooms],
   );
 
+  // updateRoom enforces "clean ⇒ not urgent" centrally, so we just set status.
   const setStatus = (room: Room, status: RoomStatus) => {
-    // Mark room clean → also drop the urgent flag so it doesn't come back hot.
-    const patch: Partial<Room> =
-      status === "pulita" ? { status, urgent: false } : { status };
-    updateRoom(room.id, patch, "pulizie");
+    updateRoom(room.id, { status }, "pulizie");
   };
 
   return (
@@ -87,6 +86,8 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
           </div>
         )}
       </main>
+
+      {saveError && <Toast message={saveError} onDismiss={dismissSaveError} />}
     </div>
   );
 }

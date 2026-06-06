@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Role, Room } from "@/lib/types";
 
@@ -15,6 +15,16 @@ function sortRooms(a: Room, b: Room): number {
 export function useRooms(enabled: boolean) {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Mirror of `rooms` so updateRoom can read the pre-edit value synchronously
+  // (to roll back) without depending on it and being recreated every change.
+  const roomsRef = useRef<Room[]>([]);
+  useEffect(() => {
+    roomsRef.current = rooms;
+  }, [rooms]);
+
+  const dismissSaveError = useCallback(() => setSaveError(null), []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -66,17 +76,29 @@ export function useRooms(enabled: boolean) {
   // will reconcile to the authoritative server value.
   const updateRoom = useCallback(
     async (id: string, patch: Partial<Room>, by: Role) => {
+      // Invariant: a clean room is never urgent — urgent only means "needs
+      // cleaning right away", so it makes no sense once a room is pulita.
+      // Enforced here so every caller (both views) obeys it.
+      const next: Partial<Room> =
+        patch.status === "pulita" ? { ...patch, urgent: false } : patch;
+      const prevRoom = roomsRef.current.find((r) => r.id === id);
       setRooms((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+        prev.map((r) => (r.id === id ? { ...r, ...next } : r)),
       );
       const { error } = await supabase
         .from("rooms")
-        .update({ ...patch, updated_by: by })
+        .update({ ...next, updated_by: by })
         .eq("id", id);
+      if (error && prevRoom) {
+        // The write failed (e.g. dropped wifi) — undo the optimistic change so
+        // the screen reflects reality, and tell the user it didn't save.
+        setRooms((prev) => prev.map((r) => (r.id === id ? prevRoom : r)));
+        setSaveError("Modifica non salvata. Controlla la connessione.");
+      }
       return error;
     },
     [],
   );
 
-  return { rooms, loading, updateRoom };
+  return { rooms, loading, updateRoom, saveError, dismissSaveError };
 }

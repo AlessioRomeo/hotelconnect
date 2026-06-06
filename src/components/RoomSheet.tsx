@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { STATUS_META, STATUS_ORDER } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
 import type { Room } from "@/lib/types";
@@ -21,10 +21,22 @@ const UPDATED_BY_LABEL = { reception: "Reception", pulizie: "Pulizie" } as const
 export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
   const [note, setNote] = useState(room.note ?? "");
 
+  const saveNote = useCallback(() => {
+    const next = note.trim();
+    if (next !== (room.note ?? "")) onUpdate({ note: next || null });
+  }, [note, room.note, onUpdate]);
+
+  // Persist any pending note edit, then close. Used by every close path so a
+  // note typed right before dismissing is never lost.
+  const handleClose = useCallback(() => {
+    saveNote();
+    onClose();
+  }, [saveNote, onClose]);
+
   // Close on Escape and lock background scroll while open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -32,12 +44,7 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
-
-  const saveNote = () => {
-    const next = note.trim();
-    if (next !== (room.note ?? "")) onUpdate({ note: next || null });
-  };
+  }, [handleClose]);
 
   return (
     <div
@@ -49,7 +56,7 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
       <button
         type="button"
         aria-label="Chiudi"
-        onClick={onClose}
+        onClick={handleClose}
         className="absolute inset-0 animate-fade-in bg-black/40"
       />
 
@@ -66,7 +73,7 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Chiudi"
             className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100"
           >
@@ -100,31 +107,34 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
           </div>
         </div>
 
-        {/* Urgent toggle */}
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 p-4">
-          <div>
-            <p className="font-medium">Urgente</p>
-            <p className="text-sm text-zinc-500">
-              In cima alla lista delle pulizie.
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={room.urgent}
-            aria-label="Urgente"
-            onClick={() => onUpdate({ urgent: !room.urgent })}
-            className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-              room.urgent ? "bg-red-600" : "bg-zinc-300"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
-                room.urgent ? "left-[1.375rem]" : "left-0.5"
+        {/* Urgent toggle — only meaningful while a room still needs cleaning,
+            so it is hidden once the room is clean. */}
+        {room.status !== "pulita" && (
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 p-4">
+            <div>
+              <p className="font-medium">Urgente</p>
+              <p className="text-sm text-zinc-500">
+                In cima alla lista delle pulizie.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={room.urgent}
+              aria-label="Urgente"
+              onClick={() => onUpdate({ urgent: !room.urgent })}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                room.urgent ? "bg-red-600" : "bg-zinc-300"
               }`}
-            />
-          </button>
-        </div>
+            >
+              <span
+                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
+                  room.urgent ? "left-[1.375rem]" : "left-0.5"
+                }`}
+              />
+            </button>
+          </div>
+        )}
 
         {/* Note */}
         <div>
