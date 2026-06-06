@@ -125,9 +125,9 @@ export function LoginScreen({ signIn }: LoginScreenProps) {
                 <button
                   type="button"
                   onClick={back}
-                  className="text-sm font-medium text-zinc-400 transition hover:text-zinc-600"
+                  className="rounded-full px-4 py-1.5 text-sm font-medium text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700"
                 >
-                  ← Cambia ruolo
+                  Cambia ruolo
                 </button>
               )}
             </div>

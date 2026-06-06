@@ -58,7 +58,7 @@ export function PinPad({
   };
 
   return (
-    <div className="grid select-none grid-cols-3 gap-2.5">
+    <div className="grid select-none grid-cols-3 gap-3">
       {DIGITS.map((d) => (
         <PadButton key={d} onClick={() => press(d)} disabled={disabled}>
           {d}
@@ -90,10 +90,9 @@ export function PinPad({
 type PadVariant = "default" | "muted" | "accent";
 
 const VARIANTS: Record<PadVariant, string> = {
-  // Clean, normal-looking buttons: white with a hairline border and a soft shadow.
-  default: "border border-zinc-200 bg-white text-zinc-900 shadow-sm hover:bg-zinc-50",
+  default: "bg-zinc-100 text-zinc-900 hover:bg-zinc-200",
   muted: "text-zinc-400 hover:bg-zinc-100",
-  accent: "bg-zinc-900 text-white shadow-sm hover:bg-zinc-800",
+  accent: "bg-zinc-900 text-white hover:bg-zinc-800",
 };
 
 function PadButton({
@@ -115,7 +114,7 @@ function PadButton({
       aria-label={ariaLabel}
       onClick={onClick}
       disabled={disabled}
-      className={`flex h-14 items-center justify-center rounded-xl text-2xl font-medium transition active:scale-95 disabled:opacity-40 disabled:active:scale-100 ${VARIANTS[variant]}`}
+      className={`flex h-16 items-center justify-center rounded-2xl text-2xl font-medium transition active:scale-95 disabled:opacity-40 disabled:active:scale-100 sm:h-20 ${VARIANTS[variant]}`}
     >
       {children}
     </button>
