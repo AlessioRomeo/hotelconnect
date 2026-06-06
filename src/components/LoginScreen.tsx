@@ -8,14 +8,14 @@ import { PinPad } from "./PinPad";
 interface RoleConfig {
   role: Role;
   label: string;
-  text: string; // accent color for the role label
+  button: string; // role button background
+  accent: string; // accent color for the role label / PIN dots context
   dot: string; // accent for the masked PIN dots
-  ring: string; // focus/hover accent
 }
 
 const ROLES: RoleConfig[] = [
-  { role: "reception", label: "Reception", text: "text-blue-600", dot: "bg-blue-600", ring: "hover:border-blue-300" },
-  { role: "pulizie", label: "Pulizie", text: "text-emerald-600", dot: "bg-emerald-600", ring: "hover:border-emerald-300" },
+  { role: "reception", label: "Reception", button: "bg-blue-600 hover:bg-blue-700", accent: "text-blue-600", dot: "bg-blue-600" },
+  { role: "pulizie", label: "Pulizie", button: "bg-emerald-600 hover:bg-emerald-700", accent: "text-emerald-600", dot: "bg-emerald-600" },
 ];
 
 interface LoginScreenProps {
@@ -80,7 +80,7 @@ export function LoginScreen({ signIn }: LoginScreenProps) {
                 key={r.role}
                 type="button"
                 onClick={() => choose(r)}
-                className={`w-full rounded-2xl border border-zinc-200 py-5 text-center text-lg font-semibold transition active:scale-[0.99] hover:bg-zinc-50 ${r.text} ${r.ring}`}
+                className={`w-full rounded-2xl py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-[0.99] ${r.button}`}
               >
                 {r.label}
               </button>
@@ -90,7 +90,7 @@ export function LoginScreen({ signIn }: LoginScreenProps) {
           <div>
             <p className="mb-6 text-center text-sm text-zinc-500">
               Accesso come{" "}
-              <span className={`font-semibold ${selected.text}`}>{selected.label}</span>
+              <span className={`font-semibold ${selected.accent}`}>{selected.label}</span>
             </p>
 
             <div key={attempt} className={error ? "animate-shake" : undefined}>
