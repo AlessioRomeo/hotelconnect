@@ -23,11 +23,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // suppressHydrationWarning: some phone browsers / extensions / in-app
+    // webviews inject attributes onto <html>/<body> before React hydrates
+    // (e.g. __gcrremoteframetoken), which is harmless but triggers a hydration
+    // warning. This suppresses only these elements' own attribute mismatches —
+    // not anything inside the app.
     <html
       lang="it"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }
