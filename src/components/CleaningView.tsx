@@ -2,15 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { useRooms } from "@/hooks/useRooms";
+import { useNotes } from "@/hooks/useNotes";
 import { useTick } from "@/hooks/useTick";
 import { GROUP_META } from "@/lib/groups";
 import { STATUS_META } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
 import type { Room, RoomStatus } from "@/lib/types";
 import { Toast } from "./Toast";
+import { NotesPanel } from "./NotesPanel";
+import { NoteComposer } from "./NoteComposer";
+import { BottomNav, type Tab } from "./BottomNav";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ServiceBadge, DndBadge } from "./RoomTags";
-import { MeetingRoomIcon, DoNotDisturbIcon } from "./icons";
+import { MeetingRoomIcon, DoNotDisturbIcon, PlusIcon } from "./icons";
 
 const NEEDS_WORK: RoomStatus[] = ["da_pulire", "in_pulizia"];
 
@@ -31,14 +35,19 @@ function cleaningSort(a: Room, b: Room): number {
 
 export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
   const { rooms, loading, updateRoom, saveError, dismissSaveError } = useRooms(true);
+  const notes = useNotes(true);
   const now = useTick(60_000);
+  const [tab, setTab] = useState<Tab>("rooms");
   const [pendingClean, setPendingClean] = useState<Room | null>(null);
   const [pendingDnd, setPendingDnd] = useState<Room | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   const todo = useMemo(
     () => rooms.filter((r) => NEEDS_WORK.includes(r.status)).sort(cleaningSort),
     [rooms],
   );
+
+  const openNotes = notes.notes.reduce((n, note) => n + (note.resolved_at ? 0 : 1), 0);
 
   const setStatus = (room: Room, status: RoomStatus) => {
     updateRoom(room.id, { status }, "pulizie");
@@ -65,17 +74,20 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
     <div className="flex flex-1 flex-col bg-zinc-50 text-zinc-900">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
-          <div>
-            <h1 className="flex items-center gap-2 text-lg font-semibold leading-tight">
-              Da pulire
-              {!loading && (
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-sm font-semibold tabular-nums text-emerald-700">
-                  {todo.length}
-                </span>
-              )}
-            </h1>
-            <p className="text-xs text-zinc-500">Pulizie</p>
-          </div>
+          <h1 className="flex items-center gap-2 text-xl font-semibold leading-tight">
+            {tab === "notes" ? (
+              "Note"
+            ) : (
+              <>
+                Da pulire
+                {!loading && (
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-sm font-semibold tabular-nums text-emerald-700">
+                    {todo.length}
+                  </span>
+                )}
+              </>
+            )}
+          </h1>
           <button
             type="button"
             onClick={onSignOut}
@@ -86,8 +98,19 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5">
-        {loading ? (
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-5 pb-24">
+        {tab === "notes" ? (
+          <NotesPanel
+            rooms={rooms}
+            now={now}
+            notes={notes.notes}
+            loading={notes.loading}
+            onAddNote={() => setComposerOpen(true)}
+            onResolve={(id) => notes.setResolved(id, true, "pulizie")}
+            onReopen={(id) => notes.setResolved(id, false, "pulizie")}
+            onDelete={notes.deleteNote}
+          />
+        ) : loading ? (
           <p className="py-20 text-center text-zinc-400">Caricamento camere…</p>
         ) : todo.length === 0 ? (
           <AllClean />
@@ -128,7 +151,31 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
         />
       )}
 
+      {tab === "rooms" && (
+        <button
+          type="button"
+          onClick={() => setComposerOpen(true)}
+          className="fixed bottom-20 right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-zinc-900 pl-5 pr-6 text-base font-semibold text-white shadow-lg transition active:scale-[0.97] hover:bg-zinc-800"
+        >
+          <PlusIcon className="h-5 w-5" />
+          Nota
+        </button>
+      )}
+
+      <BottomNav tab={tab} onTab={setTab} roomsLabel="Pulizie" notesCount={openNotes} />
+
+      {composerOpen && (
+        <NoteComposer
+          rooms={rooms}
+          onClose={() => setComposerOpen(false)}
+          onSubmit={(text, roomId) => notes.addNote(text, roomId, "pulizie")}
+        />
+      )}
+
       {saveError && <Toast message={saveError} onDismiss={dismissSaveError} />}
+      {notes.saveError && (
+        <Toast message={notes.saveError} onDismiss={notes.dismissSaveError} />
+      )}
     </div>
   );
 }

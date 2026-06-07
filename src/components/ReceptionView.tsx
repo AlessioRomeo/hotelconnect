@@ -2,11 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { useRooms } from "@/hooks/useRooms";
+import { useNotes } from "@/hooks/useNotes";
 import { useTick } from "@/hooks/useTick";
 import { GROUP_META, GROUP_ORDER } from "@/lib/groups";
 import type { Room, RoomGroup, RoomStatus } from "@/lib/types";
 import { RoomCard } from "./RoomCard";
 import { RoomSheet } from "./RoomSheet";
+import { NotesPanel } from "./NotesPanel";
+import { NoteComposer } from "./NoteComposer";
+import { BottomNav, type Tab } from "./BottomNav";
+import { PlusIcon } from "./icons";
 import { Toast } from "./Toast";
 
 type FilterKey = "all" | RoomStatus | "urgent";
@@ -21,9 +26,12 @@ const FILTERS: { key: FilterKey; label: string; dot?: string }[] = [
 
 export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
   const { rooms, loading, updateRoom, saveError, dismissSaveError } = useRooms(true);
+  const notes = useNotes(true);
   const now = useTick(60_000);
+  const [tab, setTab] = useState<Tab>("rooms");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   const counts = useMemo(() => {
     const by = { all: rooms.length, urgent: 0, pulita: 0, da_pulire: 0, in_pulizia: 0 };
@@ -33,6 +41,8 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
     }
     return by as Record<FilterKey, number>;
   }, [rooms]);
+
+  const openNotes = notes.notes.reduce((n, note) => n + (note.resolved_at ? 0 : 1), 0);
 
   const matches = (r: Room) =>
     filter === "all" ? true : filter === "urgent" ? r.urgent : r.status === filter;
@@ -48,10 +58,9 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
     <div className="flex flex-1 flex-col bg-zinc-50 text-zinc-900">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
-          <div>
-            <h1 className="text-lg font-semibold leading-tight">Camere</h1>
-            <p className="text-xs text-zinc-500">Reception</p>
-          </div>
+          <h1 className="text-xl font-semibold leading-tight">
+            {tab === "notes" ? "Note" : "Camere"}
+          </h1>
           <button
             type="button"
             onClick={onSignOut}
@@ -61,35 +70,48 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
           </button>
         </div>
 
-        <div className="mx-auto w-full max-w-5xl">
-          <div className="flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {FILTERS.map((f) => {
-              const active = filter === f.key;
-              return (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setFilter(f.key)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                    active
-                      ? "bg-zinc-900 text-white"
-                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                  }`}
-                >
-                  {f.dot && <span className={`h-2 w-2 rounded-full ${f.dot}`} />}
-                  {f.label}
-                  <span className={active ? "text-white/70" : "text-zinc-400"}>
-                    {counts[f.key]}
-                  </span>
-                </button>
-              );
-            })}
+        {tab === "rooms" && (
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {FILTERS.map((f) => {
+                const active = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setFilter(f.key)}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                      active
+                        ? "bg-zinc-900 text-white"
+                        : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                    }`}
+                  >
+                    {f.dot && <span className={`h-2 w-2 rounded-full ${f.dot}`} />}
+                    {f.label}
+                    <span className={active ? "text-white/70" : "text-zinc-400"}>
+                      {counts[f.key]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5">
-        {loading ? (
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-5 pb-24">
+        {tab === "notes" ? (
+          <NotesPanel
+            rooms={rooms}
+            now={now}
+            notes={notes.notes}
+            loading={notes.loading}
+            onAddNote={() => setComposerOpen(true)}
+            onResolve={(id) => notes.setResolved(id, true, "reception")}
+            onReopen={(id) => notes.setResolved(id, false, "reception")}
+            onDelete={notes.deleteNote}
+          />
+        ) : loading ? (
           <p className="py-20 text-center text-zinc-400">Caricamento camere…</p>
         ) : isEmpty ? (
           <p className="py-20 text-center text-zinc-400">
@@ -110,6 +132,19 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
         )}
       </main>
 
+      {tab === "rooms" && (
+        <button
+          type="button"
+          onClick={() => setComposerOpen(true)}
+          className="fixed bottom-20 right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-zinc-900 pl-5 pr-6 text-base font-semibold text-white shadow-lg transition active:scale-[0.97] hover:bg-zinc-800"
+        >
+          <PlusIcon className="h-5 w-5" />
+          Nota
+        </button>
+      )}
+
+      <BottomNav tab={tab} onTab={setTab} roomsLabel="Camere" notesCount={openNotes} />
+
       {selected && (
         <RoomSheet
           key={selected.id}
@@ -120,7 +155,18 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
         />
       )}
 
+      {composerOpen && (
+        <NoteComposer
+          rooms={rooms}
+          onClose={() => setComposerOpen(false)}
+          onSubmit={(text, roomId) => notes.addNote(text, roomId, "reception")}
+        />
+      )}
+
       {saveError && <Toast message={saveError} onDismiss={dismissSaveError} />}
+      {notes.saveError && (
+        <Toast message={notes.saveError} onDismiss={notes.dismissSaveError} />
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ interface ConfirmDialogProps {
   message?: string;
   confirmLabel: string;
   cancelLabel?: string;
+  destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -16,6 +17,7 @@ export function ConfirmDialog({
   message,
   confirmLabel,
   cancelLabel = "Annulla",
+  destructive = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -53,7 +55,11 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="flex h-14 items-center justify-center rounded-2xl bg-emerald-600 text-base font-semibold text-white transition active:scale-[0.98] hover:bg-emerald-700"
+            className={`flex h-14 items-center justify-center rounded-2xl text-base font-semibold text-white transition active:scale-[0.98] ${
+              destructive
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-emerald-600 hover:bg-emerald-700"
+            }`}
           >
             {confirmLabel}
           </button>

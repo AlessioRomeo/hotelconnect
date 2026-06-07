@@ -65,3 +65,66 @@ begin
   end if;
 end;
 $$;
+
+-- Notes / segnalazioni: free-standing notes ("Lampadina fulminata", "Lavandino
+-- rotto", ...) that persist regardless of any room's status. Optionally tied to a
+-- room. Resolved notes are kept (not deleted) for tracking; "resolved" is derived
+-- from resolved_at being set (no separate boolean).
+create table if not exists public.notes (
+  id          uuid primary key default gen_random_uuid(),
+  text        text not null,
+  room_id     uuid references public.rooms(id) on delete set null,
+  created_at  timestamptz not null default now(),
+  created_by  text check (created_by in ('reception', 'pulizie')),
+  resolved_at timestamptz,
+  resolved_by text check (resolved_by in ('reception', 'pulizie'))
+);
+
+-- RLS: any authenticated session (either role) can read and manage notes; the
+-- UI is identical for both roles. Mirrors the "both roles authenticated" approach
+-- used for rooms.
+alter table public.notes enable row level security;
+
+drop policy if exists "authenticated can read notes" on public.notes;
+create policy "authenticated can read notes"
+  on public.notes
+  for select
+  to authenticated
+  using (true);
+
+drop policy if exists "authenticated can insert notes" on public.notes;
+create policy "authenticated can insert notes"
+  on public.notes
+  for insert
+  to authenticated
+  with check (true);
+
+drop policy if exists "authenticated can update notes" on public.notes;
+create policy "authenticated can update notes"
+  on public.notes
+  for update
+  to authenticated
+  using (true)
+  with check (true);
+
+drop policy if exists "authenticated can delete notes" on public.notes;
+create policy "authenticated can delete notes"
+  on public.notes
+  for delete
+  to authenticated
+  using (true);
+
+-- Realtime for notes too.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'notes'
+  ) then
+    alter publication supabase_realtime add table public.notes;
+  end if;
+end;
+$$;

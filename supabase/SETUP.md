@@ -8,7 +8,13 @@ Supabase dashboard → **SQL Editor** → **New query** → paste the contents o
 [`schema.sql`](./schema.sql) → **Run**.
 
 This creates the `rooms` table, the auto-`updated_at` trigger, Row Level
-Security policies, and turns on realtime for the table.
+Security policies, and turns on realtime for the table. It also creates the
+`notes` table (free-standing notes / segnalazioni) with its own RLS policies and
+realtime.
+
+> `schema.sql` is **safe to re-run**. If your project predates the notes feature,
+> just paste and run `schema.sql` again — it adds the `notes` table without
+> touching existing `rooms` data.
 
 ## 2. Seed the rooms
 
