@@ -71,7 +71,9 @@ export function useRooms(enabled: boolean) {
     async (id: string, patch: Partial<Room>, by: Role) => {
       let next: Partial<Room> = patch;
       if (patch.status === "pulita") {
-        next = { ...patch, urgent: false, service_type: null, do_not_disturb: false };
+        // A clean room carries nothing over: a room note only lives while the
+        // room needs cleaning. For a permanent note, use the Note tab instead.
+        next = { ...patch, urgent: false, service_type: null, do_not_disturb: false, note: null };
       } else if (patch.status === "in_pulizia") {
         next = { ...patch, do_not_disturb: false };
       }

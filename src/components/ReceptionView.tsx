@@ -11,7 +11,6 @@ import { RoomSheet } from "./RoomSheet";
 import { NotesPanel } from "./NotesPanel";
 import { NoteComposer } from "./NoteComposer";
 import { BottomNav, type Tab } from "./BottomNav";
-import { PlusIcon } from "./icons";
 import { Toast } from "./Toast";
 
 type FilterKey = "all" | RoomStatus | "urgent";
@@ -132,18 +131,13 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
         )}
       </main>
 
-      {tab === "rooms" && (
-        <button
-          type="button"
-          onClick={() => setComposerOpen(true)}
-          className="fixed bottom-20 right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-zinc-900 pl-5 pr-6 text-base font-semibold text-white shadow-lg transition active:scale-[0.97] hover:bg-zinc-800"
-        >
-          <PlusIcon className="h-5 w-5" />
-          Nota
-        </button>
-      )}
-
-      <BottomNav tab={tab} onTab={setTab} roomsLabel="Camere" notesCount={openNotes} />
+      <BottomNav
+        tab={tab}
+        onTab={setTab}
+        roomsLabel="Camere"
+        notesCount={openNotes}
+        onAddNote={tab === "rooms" ? () => setComposerOpen(true) : undefined}
+      />
 
       {selected && (
         <RoomSheet

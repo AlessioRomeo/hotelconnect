@@ -14,7 +14,7 @@ import { NoteComposer } from "./NoteComposer";
 import { BottomNav, type Tab } from "./BottomNav";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ServiceBadge, DndBadge } from "./RoomTags";
-import { MeetingRoomIcon, DoNotDisturbIcon, PlusIcon } from "./icons";
+import { DoNotDisturbIcon } from "./icons";
 
 const NEEDS_WORK: RoomStatus[] = ["da_pulire", "in_pulizia"];
 
@@ -151,18 +151,13 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
         />
       )}
 
-      {tab === "rooms" && (
-        <button
-          type="button"
-          onClick={() => setComposerOpen(true)}
-          className="fixed bottom-20 right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-zinc-900 pl-5 pr-6 text-base font-semibold text-white shadow-lg transition active:scale-[0.97] hover:bg-zinc-800"
-        >
-          <PlusIcon className="h-5 w-5" />
-          Nota
-        </button>
-      )}
-
-      <BottomNav tab={tab} onTab={setTab} roomsLabel="Pulizie" notesCount={openNotes} />
+      <BottomNav
+        tab={tab}
+        onTab={setTab}
+        roomsLabel="Pulizie"
+        notesCount={openNotes}
+        onAddNote={tab === "rooms" ? () => setComposerOpen(true) : undefined}
+      />
 
       {composerOpen && (
         <NoteComposer
@@ -209,10 +204,7 @@ function CleaningCard({ room, now, onSetStatus, onRequestClean, onRequestDnd, on
             {group.label}
           </p>
           {group.single ? (
-            <p className="flex items-center gap-2 text-2xl font-semibold leading-tight">
-              <MeetingRoomIcon className="h-6 w-6 shrink-0 text-zinc-500" />
-              {room.name}
-            </p>
+            <p className="text-2xl font-semibold leading-tight">{room.name}</p>
           ) : (
             <p className="text-3xl font-semibold leading-none tabular-nums">
               {room.name}

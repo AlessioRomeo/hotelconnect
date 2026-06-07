@@ -21,9 +21,12 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
   const [note, setNote] = useState(room.note ?? "");
 
   const saveNote = useCallback(() => {
+    // A note only exists while the room needs cleaning; never (re)save one on a
+    // clean room — the field is hidden there and the note is cleared on cleaning.
+    if (room.status === "pulita") return;
     const next = note.trim();
     if (next !== (room.note ?? "")) onUpdate({ note: next || null });
-  }, [note, room.note, onUpdate]);
+  }, [note, room.note, room.status, onUpdate]);
 
   const handleClose = useCallback(() => {
     saveNote();
@@ -167,20 +170,22 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
           </div>
         )}
 
-        <div>
-          <label htmlFor="room-note" className="mb-2 block text-sm font-medium text-zinc-500">
-            Nota
-          </label>
-          <textarea
-            id="room-note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            onBlur={saveNote}
-            rows={2}
-            placeholder="Es. check-out tardivo, pulire dopo le 14"
-            className="w-full resize-none rounded-2xl border border-zinc-200 p-3 text-sm outline-none transition focus:border-zinc-400"
-          />
-        </div>
+        {room.status !== "pulita" && (
+          <div>
+            <label htmlFor="room-note" className="mb-2 block text-sm font-medium text-zinc-500">
+              Nota
+            </label>
+            <textarea
+              id="room-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onBlur={saveNote}
+              rows={2}
+              placeholder="Es. check-out tardivo, pulire dopo le 14"
+              className="w-full resize-none rounded-2xl border border-zinc-200 p-3 text-sm outline-none transition focus:border-zinc-400"
+            />
+          </div>
+        )}
 
         <p className="text-center text-xs text-zinc-400">
           Aggiornata {timeAgo(room.updated_at, now)}

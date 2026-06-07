@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { GridIcon, NoteIcon } from "./icons";
+import { GridIcon, NoteIcon, PlusIcon } from "./icons";
 
 export type Tab = "rooms" | "notes";
 
@@ -10,13 +10,27 @@ interface BottomNavProps {
   onTab: (tab: Tab) => void;
   roomsLabel: string;
   notesCount: number;
+  onAddNote?: () => void;
 }
 
 // Bottom tab bar — the obvious, phone-friendly way to switch between the rooms
 // list and the notes. Kept separate from the top filters on purpose.
-export function BottomNav({ tab, onTab, roomsLabel, notesCount }: BottomNavProps) {
+export function BottomNav({ tab, onTab, roomsLabel, notesCount, onAddNote }: BottomNavProps) {
   return (
     <nav className="sticky bottom-0 z-20 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]">
+      {/* Quick-add note floats just above the bar. It's a child of the (positioned)
+          nav, so it always tracks the bar — even as the mobile address bar
+          shows/hides on scroll — instead of drifting over it. */}
+      {onAddNote && (
+        <button
+          type="button"
+          onClick={onAddNote}
+          className="absolute bottom-full right-4 mb-3 flex h-14 items-center gap-2 rounded-full bg-zinc-900 pl-5 pr-6 text-base font-semibold text-white shadow-lg transition active:scale-[0.97] hover:bg-zinc-800"
+        >
+          <PlusIcon className="h-5 w-5" />
+          Nota
+        </button>
+      )}
       <div className="mx-auto flex w-full max-w-5xl">
         <NavItem
           active={tab === "rooms"}

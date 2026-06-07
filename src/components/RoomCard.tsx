@@ -4,7 +4,6 @@ import { timeAgo } from "@/lib/time";
 import type { Room } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
 import { ServiceBadge, DndBadge } from "./RoomTags";
-import { MeetingRoomIcon } from "./icons";
 
 interface RoomCardProps {
   room: Room;
@@ -25,10 +24,7 @@ export function RoomCard({ room, now, onSelect }: RoomCardProps) {
     >
       <div className="flex items-start justify-between gap-1">
         {single ? (
-          <span className="flex items-center gap-1.5 text-base font-semibold leading-tight">
-            <MeetingRoomIcon className="h-5 w-5 shrink-0 text-zinc-500" />
-            {room.name}
-          </span>
+          <span className="text-base font-semibold leading-tight">{room.name}</span>
         ) : (
           <span className="text-xl font-semibold tabular-nums">{room.name}</span>
         )}
