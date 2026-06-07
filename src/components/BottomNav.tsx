@@ -17,10 +17,10 @@ interface BottomNavProps {
 // list and the notes. Kept separate from the top filters on purpose.
 export function BottomNav({ tab, onTab, roomsLabel, notesCount, onAddNote }: BottomNavProps) {
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]">
-      {/* Quick-add note floats just above the bar. It's a child of the (positioned)
-          nav, so it always tracks the bar — even as the mobile address bar
-          shows/hides on scroll — instead of drifting over it. */}
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]">
+      {/* Quick-add note floats a fixed gap above the bar. It's a child of the bar
+          (which is pinned to the bottom of the screen), so the two always move as
+          one — no drifting apart when the mobile address bar shows/hides. */}
       {onAddNote && (
         <button
           type="button"

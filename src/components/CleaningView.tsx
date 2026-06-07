@@ -98,7 +98,7 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-5 pb-24">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-5 pb-[calc(7rem+env(safe-area-inset-bottom))]">
         {tab === "notes" ? (
           <NotesPanel
             rooms={rooms}
