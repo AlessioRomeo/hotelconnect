@@ -1,13 +1,11 @@
-// Display metadata for room statuses, kept out of `types.ts` so the domain
-// types stay free of UI concerns. Shared by the reception and cleaning views.
 import type { RoomStatus } from "./types";
 
 export interface StatusMeta {
   label: string;
-  card: string; // card background + border — the whole card carries the color
-  text: string; // status label text color
-  swatch: string; // solid dot color
-  ring: string; // ring color when this status is selected
+  card: string;
+  text: string;
+  swatch: string;
+  ring: string;
 }
 
 export const STATUS_META: Record<RoomStatus, StatusMeta> = {
@@ -34,5 +32,4 @@ export const STATUS_META: Record<RoomStatus, StatusMeta> = {
   },
 };
 
-// The order statuses appear in the sheet's selector.
 export const STATUS_ORDER: RoomStatus[] = ["pulita", "da_pulire", "in_pulizia"];

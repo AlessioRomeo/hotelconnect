@@ -1,7 +1,5 @@
 import type { MetadataRoute } from "next";
 
-// Web app manifest (served at /manifest.webmanifest, auto-linked by Next).
-// This is what makes HotelConnect installable / add-to-home-screen.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "HotelConnect",
@@ -12,7 +10,6 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    // Match the app's white header so the standalone status-bar area blends in.
     background_color: "#ffffff",
     theme_color: "#ffffff",
     icons: [

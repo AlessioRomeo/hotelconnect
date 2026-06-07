@@ -1,10 +1,5 @@
-// HotelConnect service worker — deliberately conservative.
-//
-// Goal: let the app *shell* load when offline and satisfy install criteria.
-// It must NEVER interfere with Supabase (REST + realtime websocket live on a
-// different origin, so they're skipped) and must never serve stale app code
-// (navigations are network-first; only content-hashed /_next/static assets are
-// cached, and those are safe because their filenames change every build).
+// Service worker: caches the app shell for offline. Never touches Supabase
+// (different origin); navigations are network-first, hashed assets cache-first.
 
 const CACHE = "hotelconnect-v1";
 
@@ -33,11 +28,8 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  // Only handle our own origin — leave Supabase (and any other host) alone.
   if (url.origin !== self.location.origin) return;
 
-  // Navigations: always try the network first so users get the latest app;
-  // fall back to the cached shell only when offline.
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request).catch(() =>
@@ -47,7 +39,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Hashed build assets: cache-first (safe — filenames are unique per build).
   if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
       caches.match(request).then(
@@ -61,6 +52,4 @@ self.addEventListener("fetch", (event) => {
       ),
     );
   }
-
-  // Everything else falls through to the default (network).
 });

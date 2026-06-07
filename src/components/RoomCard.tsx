@@ -1,7 +1,10 @@
+import { GROUP_META } from "@/lib/groups";
 import { STATUS_META } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
 import type { Room } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
+import { ServiceBadge, DndBadge } from "./RoomTags";
+import { MeetingRoomIcon } from "./icons";
 
 interface RoomCardProps {
   room: Room;
@@ -9,11 +12,9 @@ interface RoomCardProps {
   onSelect: (room: Room) => void;
 }
 
-// Compact card whose whole background carries the status color, so the grid is
-// scannable at a glance. Tapping opens the action sheet. Used by the reception
-// view.
 export function RoomCard({ room, now, onSelect }: RoomCardProps) {
   const meta = STATUS_META[room.status];
+  const single = GROUP_META[room.room_group].single;
   return (
     <button
       type="button"
@@ -23,7 +24,14 @@ export function RoomCard({ room, now, onSelect }: RoomCardProps) {
       }`}
     >
       <div className="flex items-start justify-between gap-1">
-        <span className="text-xl font-semibold tabular-nums">{room.name}</span>
+        {single ? (
+          <span className="flex items-center gap-1.5 text-base font-semibold leading-tight">
+            <MeetingRoomIcon className="h-5 w-5 shrink-0 text-zinc-500" />
+            {room.name}
+          </span>
+        ) : (
+          <span className="text-xl font-semibold tabular-nums">{room.name}</span>
+        )}
         {room.urgent && (
           <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
             Urgente
@@ -32,6 +40,13 @@ export function RoomCard({ room, now, onSelect }: RoomCardProps) {
       </div>
 
       <StatusBadge status={room.status} />
+
+      {(room.service_type || room.do_not_disturb) && (
+        <div className="flex flex-wrap gap-1">
+          {room.service_type && <ServiceBadge type={room.service_type} />}
+          {room.do_not_disturb && <DndBadge compact />}
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-1 text-xs text-zinc-500">
         <span>{timeAgo(room.updated_at, now)}</span>

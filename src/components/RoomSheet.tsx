@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { GROUP_META } from "@/lib/groups";
+import { SERVICE_META, SERVICE_ORDER } from "@/lib/service";
 import { STATUS_META, STATUS_ORDER } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
 import type { Room } from "@/lib/types";
+import { DndBadge } from "./RoomTags";
 
 interface RoomSheetProps {
   room: Room;
@@ -14,10 +17,6 @@ interface RoomSheetProps {
 
 const UPDATED_BY_LABEL = { reception: "Reception", pulizie: "Pulizie" } as const;
 
-// A bottom sheet on phones, a centered modal on larger screens — one component,
-// driven by responsive alignment. Shows the live room (the parent passes the
-// latest copy by id, so status changes from other devices appear here in real
-// time while it is open).
 export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
   const [note, setNote] = useState(room.note ?? "");
 
@@ -26,14 +25,11 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
     if (next !== (room.note ?? "")) onUpdate({ note: next || null });
   }, [note, room.note, onUpdate]);
 
-  // Persist any pending note edit, then close. Used by every close path so a
-  // note typed right before dismissing is never lost.
   const handleClose = useCallback(() => {
     saveNote();
     onClose();
   }, [saveNote, onClose]);
 
-  // Close on Escape and lock background scroll while open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleClose();
@@ -61,13 +57,12 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
       />
 
       <div className="relative z-10 flex w-full animate-sheet flex-col gap-5 rounded-t-3xl bg-white p-5 pb-8 text-zinc-900 sm:max-w-md sm:rounded-3xl sm:pb-5">
-        {/* drag handle (mobile affordance) */}
         <div className="mx-auto h-1.5 w-10 rounded-full bg-zinc-200 sm:hidden" />
 
         <header className="flex items-start justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-              {room.room_group === "bnb" ? "B&B" : "Hotel"}
+              {GROUP_META[room.room_group].label}
             </p>
             <h2 className="text-2xl font-semibold tabular-nums">{room.name}</h2>
           </div>
@@ -81,7 +76,6 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
           </button>
         </header>
 
-        {/* Status selector */}
         <div>
           <p className="mb-2 text-sm font-medium text-zinc-500">Stato</p>
           <div className="grid grid-cols-3 gap-2">
@@ -107,8 +101,45 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
           </div>
         </div>
 
-        {/* Urgent toggle — only meaningful while a room still needs cleaning,
-            so it is hidden once the room is clean. */}
+        {room.status !== "pulita" && (
+          <div>
+            <p className="mb-2 text-sm font-medium text-zinc-500">Tipo di pulizia</p>
+            <div className="grid grid-cols-2 gap-2">
+              {SERVICE_ORDER.map((t) => {
+                const meta = SERVICE_META[t];
+                const active = room.service_type === t;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => onUpdate({ service_type: active ? null : t })}
+                    className={`rounded-2xl border p-3 text-sm font-medium transition ${
+                      active
+                        ? `${meta.pill} border-transparent ring-2 ring-current`
+                        : "border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50"
+                    }`}
+                  >
+                    {meta.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {room.do_not_disturb && (
+          <div className="-my-1 flex items-center justify-between gap-3">
+            <DndBadge />
+            <button
+              type="button"
+              onClick={() => onUpdate({ do_not_disturb: false })}
+              className="text-sm font-medium text-red-700 transition hover:underline"
+            >
+              Rimuovi
+            </button>
+          </div>
+        )}
+
         {room.status !== "pulita" && (
           <div className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 p-4">
             <div>
@@ -136,7 +167,6 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
           </div>
         )}
 
-        {/* Note */}
         <div>
           <label htmlFor="room-note" className="mb-2 block text-sm font-medium text-zinc-500">
             Nota

@@ -3,17 +3,17 @@
 import { useMemo, useState } from "react";
 import { useRooms } from "@/hooks/useRooms";
 import { useTick } from "@/hooks/useTick";
+import { GROUP_META } from "@/lib/groups";
 import { STATUS_META } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
 import type { Room, RoomStatus } from "@/lib/types";
 import { Toast } from "./Toast";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { ServiceBadge, DndBadge } from "./RoomTags";
+import { MeetingRoomIcon, DoNotDisturbIcon } from "./icons";
 
-// Cleaners only care about rooms that still need attention.
 const NEEDS_WORK: RoomStatus[] = ["da_pulire", "in_pulizia"];
 
-// Sort so the next thing to do is always first: urgent on top, then rooms not
-// yet started before ones already in progress, then a stable room order.
 const STATUS_RANK: Record<RoomStatus, number> = {
   da_pulire: 0,
   in_pulizia: 1,
@@ -21,36 +21,45 @@ const STATUS_RANK: Record<RoomStatus, number> = {
 };
 
 function cleaningSort(a: Room, b: Room): number {
+  if (a.do_not_disturb !== b.do_not_disturb) return a.do_not_disturb ? 1 : -1;
   if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
   if (a.status !== b.status) return STATUS_RANK[a.status] - STATUS_RANK[b.status];
-  if (a.room_group !== b.room_group) return a.room_group === "hotel" ? -1 : 1;
+  if (a.room_group !== b.room_group)
+    return GROUP_META[a.room_group].order - GROUP_META[b.room_group].order;
   return a.sort_order - b.sort_order;
 }
 
-// The cleaning (Pulizie) screen. Deliberately minimal: a single urgent-first
-// list of rooms to do, each with large one-tap buttons. Built for one-handed
-// use on a phone, but scales up to a grid on tablet/desktop.
 export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
   const { rooms, loading, updateRoom, saveError, dismissSaveError } = useRooms(true);
   const now = useTick(60_000);
-  // Room awaiting a "mark clean" confirmation (marking clean removes it from
-  // the list, so we guard against accidental taps).
   const [pendingClean, setPendingClean] = useState<Room | null>(null);
+  const [pendingDnd, setPendingDnd] = useState<Room | null>(null);
 
   const todo = useMemo(
     () => rooms.filter((r) => NEEDS_WORK.includes(r.status)).sort(cleaningSort),
     [rooms],
   );
 
-  // updateRoom enforces "clean ⇒ not urgent" centrally, so we just set status.
   const setStatus = (room: Room, status: RoomStatus) => {
     updateRoom(room.id, { status }, "pulizie");
+  };
+
+  const setDnd = (room: Room, value: boolean) => {
+    updateRoom(room.id, { do_not_disturb: value }, "pulizie");
   };
 
   const confirmClean = () => {
     if (pendingClean) setStatus(pendingClean, "pulita");
     setPendingClean(null);
   };
+
+  const confirmDnd = () => {
+    if (pendingDnd) setDnd(pendingDnd, true);
+    setPendingDnd(null);
+  };
+
+  const roomLabel = (room: Room) =>
+    GROUP_META[room.room_group].single ? room.name : `la camera ${room.name}`;
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 text-zinc-900">
@@ -91,6 +100,8 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
                 now={now}
                 onSetStatus={setStatus}
                 onRequestClean={setPendingClean}
+                onRequestDnd={setPendingDnd}
+                onSetDnd={setDnd}
               />
             ))}
           </div>
@@ -99,11 +110,21 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
 
       {pendingClean && (
         <ConfirmDialog
-          title={`Vuoi davvero segnare la camera ${pendingClean.name} come pulita?`}
+          title={`Vuoi davvero segnare ${roomLabel(pendingClean)} come pulita?`}
           message="Sparirà dalla lista delle pulizie."
           confirmLabel="Sì, è pulita"
           onConfirm={confirmClean}
           onCancel={() => setPendingClean(null)}
+        />
+      )}
+
+      {pendingDnd && (
+        <ConfirmDialog
+          title={`Segnare ${roomLabel(pendingDnd)} come "Non disturbare"?`}
+          message="Resterà da pulire, in fondo alla lista."
+          confirmLabel="Sì, non disturbare"
+          onConfirm={confirmDnd}
+          onCancel={() => setPendingDnd(null)}
         />
       )}
 
@@ -117,34 +138,59 @@ interface CleaningCardProps {
   now: number;
   onSetStatus: (room: Room, status: RoomStatus) => void;
   onRequestClean: (room: Room) => void;
+  onRequestDnd: (room: Room) => void;
+  onSetDnd: (room: Room, value: boolean) => void;
 }
 
-function CleaningCard({ room, now, onSetStatus, onRequestClean }: CleaningCardProps) {
+function CleaningCard({ room, now, onSetStatus, onRequestClean, onRequestDnd, onSetDnd }: CleaningCardProps) {
   const meta = STATUS_META[room.status];
+  const group = GROUP_META[room.room_group];
   const inProgress = room.status === "in_pulizia";
+  const blocked = room.do_not_disturb;
 
   return (
     <div
-      className={`flex flex-col gap-3 rounded-2xl border p-4 ${meta.card} ${
-        room.urgent ? "ring-2 ring-red-500" : ""
+      className={`flex flex-col gap-3 rounded-2xl border p-4 ${
+        blocked
+          ? "border-zinc-300 bg-zinc-100"
+          : `${meta.card} ${room.urgent ? "ring-2 ring-red-500" : ""}`
       }`}
     >
-      {/* Room identity + status */}
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-            {room.room_group === "bnb" ? "B&B" : "Hotel"}
+            {group.label}
           </p>
-          <p className="text-3xl font-semibold leading-none tabular-nums">
-            {room.name}
-          </p>
+          {group.single ? (
+            <p className="flex items-center gap-2 text-2xl font-semibold leading-tight">
+              <MeetingRoomIcon className="h-6 w-6 shrink-0 text-zinc-500" />
+              {room.name}
+            </p>
+          ) : (
+            <p className="text-3xl font-semibold leading-none tabular-nums">
+              {room.name}
+            </p>
+          )}
         </div>
         <div className="flex flex-col items-end gap-1.5">
+          {room.status === "da_pulire" && !blocked && (
+            <button
+              type="button"
+              onClick={() => onRequestDnd(room)}
+              aria-label="Segna non disturbare"
+              title="Non disturbare"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-300 bg-white/70 text-zinc-400 transition hover:border-red-300 hover:text-red-600 active:scale-95"
+            >
+              <DoNotDisturbIcon className="h-4 w-4" />
+            </button>
+          )}
+          {blocked && <DndBadge />}
           {room.urgent && (
             <span className="rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
               Urgente
             </span>
           )}
+          {room.service_type && <ServiceBadge type={room.service_type} />}
           <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${meta.text}`}>
             <span className={`h-2 w-2 rounded-full ${meta.swatch}`} />
             {meta.label}
@@ -152,7 +198,6 @@ function CleaningCard({ room, now, onSetStatus, onRequestClean }: CleaningCardPr
         </div>
       </div>
 
-      {/* Note from reception — important context, shown prominently. */}
       {room.note && (
         <p className="rounded-xl bg-white/70 px-3 py-2 text-sm text-zinc-700">
           {room.note}
@@ -161,8 +206,20 @@ function CleaningCard({ room, now, onSetStatus, onRequestClean }: CleaningCardPr
 
       <p className="text-xs text-zinc-500">Aggiornata {timeAgo(room.updated_at, now)}</p>
 
-      {/* Actions — big one-tap targets. */}
-      {inProgress ? (
+      {blocked ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-zinc-600">
+            Cliente in camera o cartello esposto.
+          </p>
+          <button
+            type="button"
+            onClick={() => onSetDnd(room, false)}
+            className="flex h-14 items-center justify-center rounded-2xl border border-zinc-300 bg-white text-base font-semibold text-zinc-700 transition active:scale-[0.98] hover:bg-zinc-50"
+          >
+            Riprova
+          </button>
+        </div>
+      ) : inProgress ? (
         <div className="flex flex-col gap-2">
           <button
             type="button"
@@ -201,7 +258,6 @@ function CleaningCard({ room, now, onSetStatus, onRequestClean }: CleaningCardPr
   );
 }
 
-// Reassuring empty state when there is nothing left to clean.
 function AllClean() {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">

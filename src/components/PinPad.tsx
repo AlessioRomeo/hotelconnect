@@ -25,11 +25,6 @@ const CheckIcon = (
   </svg>
 );
 
-// A finger-friendly numeric keypad. It is intentionally role-agnostic: the
-// caller owns the PIN value (so it can clear it on a wrong attempt) and styles
-// the masked display. A custom pad — rather than a text <input> — gives large,
-// consistent tap targets on phones and sidesteps the iOS "zoom on focus" jump.
-// Physical keyboards (desktop/tablet) still work via the window key listener.
 export function PinPad({
   value,
   onChange,

@@ -5,9 +5,6 @@ import type { AuthError, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { Role } from "@/lib/types";
 
-// Each role maps to a hidden backend account. The user types a PIN, which the
-// app uses as that account's password. The role is derived from the signed-in
-// email, so it survives reloads with no extra storage.
 const ROLE_EMAILS: Record<Role, string> = {
   reception: process.env.NEXT_PUBLIC_RECEPTION_EMAIL!,
   pulizie: process.env.NEXT_PUBLIC_PULIZIE_EMAIL!,
@@ -24,8 +21,6 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Supabase persists the session in localStorage by default, so a returning
-    // device is already logged in.
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);

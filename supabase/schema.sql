@@ -1,33 +1,23 @@
--- ============================================================================
--- HotelConnect — database schema
--- Run this in the Supabase dashboard: SQL Editor -> New query -> paste -> Run.
--- Safe to re-run (uses IF NOT EXISTS / idempotent guards where practical).
--- ============================================================================
+-- HotelConnect schema. Run in the Supabase dashboard SQL editor. Safe to re-run.
 
--- ----------------------------------------------------------------------------
--- rooms: the single table that does almost everything.
--- ----------------------------------------------------------------------------
--- Note: the column is named "room_group" (not "group") because GROUP is a
--- reserved SQL keyword and using it bare causes endless quoting headaches.
+-- "room_group" (not "group") because GROUP is a reserved SQL keyword.
 create table if not exists public.rooms (
   id          uuid primary key default gen_random_uuid(),
-  name        text not null,                         -- label staff recognise: "101", "1"
-  room_group  text not null check (room_group in ('hotel', 'bnb')),
+  name        text not null,
+  room_group  text not null check (room_group in ('hotel', 'bnb', 'sala')),
   status      text not null default 'pulita'
               check (status in ('pulita', 'da_pulire', 'in_pulizia')),
-  urgent      boolean not null default false,        -- meaningful only when da_pulire
-  note        text,                                  -- optional short free text
+  urgent      boolean not null default false,
+  service_type text
+              check (service_type is null or service_type in ('fermata', 'partenza')),
+  do_not_disturb boolean not null default false,
+  note        text,
   updated_at  timestamptz not null default now(),
-  updated_by  text check (updated_by in ('reception', 'pulizie')),  -- last role to change it
-  sort_order  integer not null default 0,            -- stable display order within a group
-  -- a room name is unique within its group (hotel "1" and bnb "1" could coexist)
+  updated_by  text check (updated_by in ('reception', 'pulizie')),
+  sort_order  integer not null default 0,
   unique (room_group, name)
 );
 
--- ----------------------------------------------------------------------------
--- Keep updated_at fresh automatically on every UPDATE, so the client can never
--- forget to bump it. (updated_by is still set by the client.)
--- ----------------------------------------------------------------------------
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -43,17 +33,7 @@ create trigger rooms_set_updated_at
   before update on public.rooms
   for each row execute function public.set_updated_at();
 
--- ----------------------------------------------------------------------------
--- Row Level Security: only an authenticated session (someone who signed in via
--- the PIN -> hidden role account) can read or change rooms. The anon public key
--- alone gives NO access.
---
--- First version: both authenticated roles can read and update. The difference
--- in what reception vs pulizie can do is enforced in the UI. (Role-specific DB
--- permissions are deliberately deferred — see the brief.)
--- INSERT/DELETE are intentionally NOT granted: the room list is seeded once via
--- the SQL editor (service role) and never changes from the app.
--- ----------------------------------------------------------------------------
+-- RLS: only authenticated sessions can read/update; INSERT/DELETE not granted.
 alter table public.rooms enable row level security;
 
 drop policy if exists "authenticated can read rooms" on public.rooms;
@@ -71,11 +51,7 @@ create policy "authenticated can update rooms"
   using (true)
   with check (true);
 
--- ----------------------------------------------------------------------------
--- Realtime: broadcast row changes on rooms to all connected clients.
--- This is the heart of the app — without it, devices don't sync live.
--- (The supabase_realtime publication already exists on a fresh project.)
--- ----------------------------------------------------------------------------
+-- Realtime: broadcast row changes to all connected clients.
 do $$
 begin
   if not exists (

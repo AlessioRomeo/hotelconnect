@@ -1,4 +1,3 @@
-// Compact Italian relative time, e.g. "adesso", "5 minuti fa", "2 ore fa".
 const rtf = new Intl.RelativeTimeFormat("it", { numeric: "auto" });
 
 export function timeAgo(iso: string, now: number = Date.now()): string {

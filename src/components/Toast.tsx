@@ -8,8 +8,6 @@ interface ToastProps {
   durationMs?: number;
 }
 
-// A small transient pill at the bottom of the screen, used for non-blocking
-// feedback like a failed save. Auto-dismisses itself after a few seconds.
 export function Toast({ message, onDismiss, durationMs = 4000 }: ToastProps) {
   useEffect(() => {
     const id = setTimeout(onDismiss, durationMs);

@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRooms } from "@/hooks/useRooms";
 import { useTick } from "@/hooks/useTick";
-import type { Room, RoomStatus } from "@/lib/types";
+import { GROUP_META, GROUP_ORDER } from "@/lib/groups";
+import type { Room, RoomGroup, RoomStatus } from "@/lib/types";
 import { RoomCard } from "./RoomCard";
 import { RoomSheet } from "./RoomSheet";
 import { Toast } from "./Toast";
@@ -36,8 +37,11 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
   const matches = (r: Room) =>
     filter === "all" ? true : filter === "urgent" ? r.urgent : r.status === filter;
 
-  const hotel = rooms.filter((r) => r.room_group === "hotel" && matches(r));
-  const bnb = rooms.filter((r) => r.room_group === "bnb" && matches(r));
+  const sections = GROUP_ORDER.map((group) => ({
+    group,
+    rooms: rooms.filter((r) => r.room_group === group && matches(r)),
+  }));
+  const isEmpty = sections.every((s) => s.rooms.length === 0);
   const selected = selectedId ? rooms.find((r) => r.id === selectedId) ?? null : null;
 
   return (
@@ -87,14 +91,21 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5">
         {loading ? (
           <p className="py-20 text-center text-zinc-400">Caricamento camere…</p>
-        ) : hotel.length === 0 && bnb.length === 0 ? (
+        ) : isEmpty ? (
           <p className="py-20 text-center text-zinc-400">
             Nessuna camera in questa categoria.
           </p>
         ) : (
           <div className="flex flex-col gap-7">
-            <Section title="Hotel" rooms={hotel} now={now} onSelect={(r) => setSelectedId(r.id)} />
-            <Section title="B&B" rooms={bnb} now={now} onSelect={(r) => setSelectedId(r.id)} />
+            {sections.map(({ group, rooms }) => (
+              <Section
+                key={group}
+                group={group}
+                rooms={rooms}
+                now={now}
+                onSelect={(r) => setSelectedId(r.id)}
+              />
+            ))}
           </div>
         )}
       </main>
@@ -115,24 +126,31 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
 }
 
 function Section({
-  title,
+  group,
   rooms,
   now,
   onSelect,
 }: {
-  title: string;
+  group: RoomGroup;
   rooms: Room[];
   now: number;
   onSelect: (room: Room) => void;
 }) {
   if (rooms.length === 0) return null;
+  const { label, single } = GROUP_META[group];
   return (
     <section>
       <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-        {title}
+        {label}
         <span className="font-normal text-zinc-400">{rooms.length}</span>
       </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div
+        className={
+          single
+            ? "grid grid-cols-1 gap-3 sm:max-w-sm"
+            : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+        }
+      >
         {rooms.map((r) => (
           <RoomCard key={r.id} room={r} now={now} onSelect={onSelect} />
         ))}

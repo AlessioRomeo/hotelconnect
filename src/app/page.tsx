@@ -5,8 +5,6 @@ import { LoginScreen } from "@/components/LoginScreen";
 import { ReceptionView } from "@/components/ReceptionView";
 import { CleaningView } from "@/components/CleaningView";
 
-// Single entry point. Swaps between the login screen and the role views based
-// on the auth session.
 export default function Home() {
   const { session, role, loading, signIn, signOut } = useAuth();
 
@@ -26,6 +24,5 @@ export default function Home() {
     return <ReceptionView onSignOut={signOut} />;
   }
 
-  // role === "pulizie"
   return <CleaningView onSignOut={signOut} />;
 }

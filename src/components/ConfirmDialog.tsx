@@ -11,9 +11,6 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-// A small centered confirmation modal for irreversible-feeling actions
-// (e.g. marking a room clean, which removes it from the cleaner's list).
-// Esc or tapping the backdrop cancels.
 export function ConfirmDialog({
   title,
   message,

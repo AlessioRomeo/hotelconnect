@@ -8,9 +8,9 @@ import { PinPad } from "./PinPad";
 interface RoleConfig {
   role: Role;
   label: string;
-  button: string; // role button background
-  accent: string; // accent color for the role label / PIN dots context
-  dot: string; // accent for the masked PIN dots
+  button: string;
+  accent: string;
+  dot: string;
 }
 
 const ROLES: RoleConfig[] = [
@@ -22,14 +22,12 @@ interface LoginScreenProps {
   signIn: (role: Role, pin: string) => Promise<AuthError | null>;
 }
 
-// Step 1: choose a role. Step 2: type the role's PIN. On success the parent
-// observes the new auth session and swaps this screen out.
 export function LoginScreen({ signIn }: LoginScreenProps) {
   const [selected, setSelected] = useState<RoleConfig | null>(null);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [attempt, setAttempt] = useState(0); // bumps to replay the shake
+  const [attempt, setAttempt] = useState(0);
 
   const back = () => {
     setSelected(null);
@@ -59,13 +57,11 @@ export function LoginScreen({ signIn }: LoginScreenProps) {
       setAttempt((a) => a + 1);
       setSubmitting(false);
     }
-    // On success the auth listener swaps this view away — no cleanup needed.
   };
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-12 text-zinc-900">
       <div className="w-full max-w-xs">
-        {/* Wordmark */}
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-semibold tracking-tight">Hotel Villa Romeo</h1>
           <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-zinc-400">

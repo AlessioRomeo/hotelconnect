@@ -17,8 +17,6 @@ export const metadata: Metadata = {
   applicationName: "HotelConnect",
   title: "HotelConnect",
   description: "Coordinamento pulizie camere per reception e personale di pulizia.",
-  // Make iOS treat the home-screen launch as a standalone app with the right
-  // title and status-bar style (the manifest is auto-linked by Next).
   appleWebApp: {
     capable: true,
     title: "HotelConnect",
@@ -38,11 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // suppressHydrationWarning: some phone browsers / extensions / in-app
-    // webviews inject attributes onto <html>/<body> before React hydrates
-    // (e.g. __gcrremoteframetoken), which is harmless but triggers a hydration
-    // warning. This suppresses only these elements' own attribute mismatches —
-    // not anything inside the app.
+    // suppressHydrationWarning: extensions/webviews inject attrs on html/body before hydration.
     <html
       lang="it"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}

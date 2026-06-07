@@ -1,8 +1,6 @@
 import { STATUS_META } from "@/lib/status";
 import type { RoomStatus } from "@/lib/types";
 
-// A small dot + status label. The card itself carries the status color, so this
-// stays deliberately lightweight (no pill background).
 export function StatusBadge({ status }: { status: RoomStatus }) {
   const meta = STATUS_META[status];
   return (
