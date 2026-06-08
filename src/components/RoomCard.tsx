@@ -16,12 +16,12 @@ export function RoomCard({ room, now, onSelect }: RoomCardProps) {
   const single = GROUP_META[room.room_group].single;
   // Occupied rooms (hidden from cleaning) get a paler card so reception can
   // tell at a glance which "da pulire" rooms are not yet shown to the cleaners.
-  const cardStyle = room.guest_in_room ? "border-amber-200 bg-amber-50" : meta.card;
+  const cardStyle = room.guest_in_room ? "border-orange-200 bg-orange-50" : meta.card;
   return (
     <button
       type="button"
       onClick={() => onSelect(room)}
-      className={`flex flex-col gap-2 rounded-2xl border p-3 text-left transition active:scale-[0.98] ${cardStyle} ${
+      className={`card-shadow flex flex-col gap-2 rounded-2xl border p-3 text-left transition active:scale-[0.98] ${cardStyle} ${
         room.urgent ? "ring-2 ring-red-500" : ""
       }`}
     >
@@ -40,16 +40,15 @@ export function RoomCard({ room, now, onSelect }: RoomCardProps) {
 
       <StatusBadge status={room.status} />
 
-      {room.guest_in_room && <GuestBadge />}
-
-      {(room.service_type || room.do_not_disturb) && (
+      {(room.service_type || room.do_not_disturb || room.guest_in_room) && (
         <div className="flex flex-wrap gap-1">
+          {room.guest_in_room && <GuestBadge />}
           {room.service_type && <ServiceBadge type={room.service_type} />}
           {room.do_not_disturb && <DndBadge compact />}
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-1 text-xs text-zinc-500">
+      <div className="mt-auto flex items-center justify-between gap-1 text-xs text-zinc-500">
         <span>{timeAgo(room.updated_at, now)}</span>
         {room.note && (
           <svg

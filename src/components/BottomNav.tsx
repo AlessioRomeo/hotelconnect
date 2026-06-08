@@ -68,23 +68,19 @@ function NavItem({
       type="button"
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className="flex flex-1 flex-col items-center gap-1 py-2"
+      className={`flex flex-1 flex-col items-center gap-1 py-2.5 transition ${
+        active ? "bg-zinc-100 text-zinc-900" : "text-zinc-400"
+      }`}
     >
-      <span
-        className={`relative flex h-8 w-16 items-center justify-center rounded-full transition ${
-          active ? "bg-zinc-900 text-white" : "text-zinc-500"
-        }`}
-      >
+      <span className="relative">
         {icon}
         {badge > 0 && (
-          <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold tabular-nums text-white">
+          <span className="absolute -right-2 -top-1.5 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold tabular-nums text-white">
             {badge}
           </span>
         )}
       </span>
-      <span className={`text-xs font-medium ${active ? "text-zinc-900" : "text-zinc-500"}`}>
-        {label}
-      </span>
+      <span className="text-xs font-medium">{label}</span>
     </button>
   );
 }

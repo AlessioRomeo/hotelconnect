@@ -5,7 +5,7 @@ import { roomLabel } from "@/lib/groups";
 import { timeAgo } from "@/lib/time";
 import { ROLE_LABELS, type Note, type Room } from "@/lib/types";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { CheckIcon, PlusIcon, TrashIcon } from "./icons";
+import { CheckIcon, ChevronDownIcon, PlusIcon, TrashIcon } from "./icons";
 
 interface NotesPanelProps {
   rooms: Room[];
@@ -90,16 +90,22 @@ export function NotesPanel({
           )}
 
           {resolved.length > 0 && (
-            <section>
+            <section className="border-t border-zinc-200 pt-5">
               <button
                 type="button"
                 onClick={() => setShowResolved((v) => !v)}
-                className="flex w-full items-center justify-between text-sm font-semibold uppercase tracking-wide text-zinc-500"
+                className="flex w-full items-center justify-between rounded-xl bg-zinc-100 px-4 py-3 transition hover:bg-zinc-200/60"
               >
-                <span>
-                  Risolte <span className="font-normal text-zinc-400">{resolved.length}</span>
+                <span className="flex items-center gap-2 text-sm font-semibold text-zinc-700">
+                  <CheckIcon className="h-4 w-4 text-emerald-600" />
+                  Risolte
+                  <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-zinc-500">
+                    {resolved.length}
+                  </span>
                 </span>
-                <span className="text-zinc-400">{showResolved ? "Nascondi" : "Mostra"}</span>
+                <ChevronDownIcon
+                  className={`h-4 w-4 text-zinc-400 transition ${showResolved ? "rotate-180" : ""}`}
+                />
               </button>
               {showResolved && (
                 <ul className="mt-3 flex flex-col gap-2">
@@ -160,33 +166,37 @@ interface NoteRowProps {
 }
 
 function NoteRow({ note, room, now, onResolve, onReopen, onDelete }: NoteRowProps) {
-  const isResolved = !!note.resolved_at;
+  const badge = (
+    <span className="shrink-0 rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-semibold text-white">
+      {room ? roomLabel(room) : "Generale"}
+    </span>
+  );
 
-  // Resolved notes: compact row, small "Riapri" + delete (left as-is).
-  if (isResolved) {
+  // Resolved notes: flat, muted "done" card (no shadow), set apart from open ones.
+  if (note.resolved_at) {
     return (
-      <li className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
-        <div className="flex items-start justify-between gap-2">
-          <p className="flex-1 text-[15px] leading-snug text-zinc-400 line-through">
-            {note.text}
-          </p>
-          <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-500">
+      <li className="rounded-2xl border border-zinc-200 bg-white p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="shrink-0 rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] font-semibold text-zinc-500">
             {room ? roomLabel(room) : "Generale"}
           </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+            <CheckIcon className="h-3 w-3" />
+            Risolta
+          </span>
         </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-zinc-400">
-            {`Risolta ${timeAgo(note.resolved_at!, now)}${
-              note.resolved_by ? ` · ${ROLE_LABELS[note.resolved_by]}` : ""
-            }`}
-          </p>
+        <p className="mt-2.5 text-[15px] leading-snug text-zinc-400 line-through">{note.text}</p>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className="text-xs text-zinc-400">
+            {timeAgo(note.resolved_at, now)}
+            {note.resolved_by ? ` · ${ROLE_LABELS[note.resolved_by]}` : ""}
+          </span>
           <div className="flex items-center gap-1">
             {onReopen && (
               <button
                 type="button"
                 onClick={onReopen}
-                className="rounded-full px-2.5 py-1 text-xs font-medium text-zinc-500 transition hover:bg-zinc-100"
+                className="rounded-full px-2.5 py-1 text-xs font-medium text-zinc-500 transition hover:bg-zinc-200/70"
               >
                 Riapri
               </button>
@@ -206,23 +216,20 @@ function NoteRow({ note, room, now, onResolve, onReopen, onDelete }: NoteRowProp
     );
   }
 
-  // Open notes: two big 50/50 actions at the bottom of the card.
+  // Open notes: elevated white card with the text up top and 50/50 actions.
   return (
-    <li className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-3">
-      <div className="flex items-start justify-between gap-2">
-        <p className="flex-1 text-[15px] leading-snug text-zinc-900">{note.text}</p>
-        <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-500">
-          {room ? roomLabel(room) : "Generale"}
+    <li className="card-shadow rounded-2xl border border-zinc-200 bg-white p-4">
+      <div className="flex items-center justify-between gap-2">
+        {badge}
+        <span className="text-xs text-zinc-400">
+          {note.created_by ? `${ROLE_LABELS[note.created_by]} · ` : ""}
+          {timeAgo(note.created_at, now)}
         </span>
       </div>
 
-      <p className="text-xs text-zinc-400">
-        {`Aggiunta ${timeAgo(note.created_at, now)}${
-          note.created_by ? ` · ${ROLE_LABELS[note.created_by]}` : ""
-        }`}
-      </p>
+      <p className="mt-2.5 text-[15px] font-medium leading-snug text-zinc-900">{note.text}</p>
 
-      <div className="flex gap-2">
+      <div className="mt-4 flex gap-2">
         <button
           type="button"
           onClick={onResolve}

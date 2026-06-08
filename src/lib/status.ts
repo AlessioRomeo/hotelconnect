@@ -18,10 +18,10 @@ export const STATUS_META: Record<RoomStatus, StatusMeta> = {
   },
   da_pulire: {
     label: "Da pulire",
-    card: "border-amber-300 bg-amber-100",
-    text: "text-amber-800",
-    swatch: "bg-amber-500",
-    ring: "ring-amber-500",
+    card: "border-orange-300 bg-orange-100",
+    text: "text-orange-800",
+    swatch: "bg-orange-500",
+    ring: "ring-orange-500",
   },
   in_pulizia: {
     label: "In pulizia",

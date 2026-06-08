@@ -196,7 +196,7 @@ function CleaningCard({ room, now, onSetStatus, onRequestClean, onRequestDnd, on
 
   return (
     <div
-      className={`flex flex-col gap-3 rounded-2xl border p-4 ${
+      className={`card-shadow flex flex-col gap-3 rounded-2xl border p-4 ${
         blocked
           ? "border-zinc-300 bg-zinc-100"
           : `${meta.card} ${room.urgent ? "ring-2 ring-red-500" : ""}`

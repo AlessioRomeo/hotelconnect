@@ -17,7 +17,7 @@ type FilterKey = "all" | RoomStatus | "urgent";
 
 const FILTERS: { key: FilterKey; label: string; dot?: string }[] = [
   { key: "all", label: "Tutte" },
-  { key: "da_pulire", label: "Da pulire", dot: "bg-amber-500" },
+  { key: "da_pulire", label: "Da pulire", dot: "bg-orange-500" },
   { key: "in_pulizia", label: "In pulizia", dot: "bg-blue-500" },
   { key: "pulita", label: "Pulite", dot: "bg-emerald-500" },
   { key: "urgent", label: "Urgenti", dot: "bg-red-500" },

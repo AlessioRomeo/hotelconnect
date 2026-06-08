@@ -76,3 +76,8 @@ body {
 .animate-sheet {
   animation: slide-up 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* Soft, evenly-spread (centered, no offset) shadow shared by all cards. */
+.card-shadow {
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.035), 0 0 28px rgba(0, 0, 0, 0.025);
+}
