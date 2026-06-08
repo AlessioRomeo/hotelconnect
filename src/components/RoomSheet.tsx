@@ -185,7 +185,7 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
               aria-label="Ospite in camera"
               onClick={() => onUpdate({ guest_in_room: !room.guest_in_room })}
               className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-                room.guest_in_room ? "bg-orange-500" : "bg-zinc-300"
+                room.guest_in_room ? "bg-rose-600" : "bg-zinc-300"
               }`}
             >
               <span

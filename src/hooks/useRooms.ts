@@ -84,6 +84,10 @@ export function useRooms(enabled: boolean) {
       } else if (patch.status === "in_pulizia") {
         next = { ...patch, do_not_disturb: false };
       }
+      // Urgent and "guest in room" are mutually exclusive: an urgent room must be
+      // visible to cleaners, an occupied one is hidden — a room can't be both.
+      if (patch.urgent === true) next = { ...next, guest_in_room: false };
+      if (patch.guest_in_room === true) next = { ...next, urgent: false };
       const prevRoom = roomsRef.current.find((r) => r.id === id);
       setRooms((prev) =>
         prev.map((r) => (r.id === id ? { ...r, ...next } : r)),

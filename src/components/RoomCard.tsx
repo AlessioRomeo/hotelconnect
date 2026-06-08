@@ -14,9 +14,10 @@ interface RoomCardProps {
 export function RoomCard({ room, now, onSelect }: RoomCardProps) {
   const meta = STATUS_META[room.status];
   const single = GROUP_META[room.room_group].single;
-  // Occupied rooms (hidden from cleaning) get a paler card so reception can
-  // tell at a glance which "da pulire" rooms are not yet shown to the cleaners.
-  const cardStyle = room.guest_in_room ? "border-orange-200 bg-orange-50" : meta.card;
+  // Occupied rooms (hidden from cleaning) get a distinct soft-rose "on hold" card
+  // (a "do not enter" feel) so reception can clearly tell which "da pulire" rooms
+  // aren't shown to cleaners yet; matches the rose occupata badge.
+  const cardStyle = room.guest_in_room ? "border-rose-300 bg-rose-100" : meta.card;
   return (
     <button
       type="button"

@@ -15,7 +15,7 @@ export function ServiceBadge({ type }: { type: ServiceType }) {
 
 export function GuestBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[#f4511e] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+    <span className="inline-flex items-center gap-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
       <PersonIcon className="h-2.5 w-2.5 shrink-0" />
       Camera occupata
     </span>
