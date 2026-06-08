@@ -13,19 +13,11 @@ export function ServiceBadge({ type }: { type: ServiceType }) {
   );
 }
 
-export function GuestBadge({ compact = false }: { compact?: boolean }) {
-  if (compact) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
-        <PersonIcon className="h-2.5 w-2.5 shrink-0" />
-        Ospite
-      </span>
-    );
-  }
+export function GuestBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-amber-800">
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
       <PersonIcon className="h-3 w-3" />
-      Ospite in camera
+      Camera occupata
     </span>
   );
 }

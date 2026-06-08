@@ -14,11 +14,14 @@ interface RoomCardProps {
 export function RoomCard({ room, now, onSelect }: RoomCardProps) {
   const meta = STATUS_META[room.status];
   const single = GROUP_META[room.room_group].single;
+  // Occupied rooms (hidden from cleaning) get a paler card so reception can
+  // tell at a glance which "da pulire" rooms are not yet shown to the cleaners.
+  const cardStyle = room.guest_in_room ? "border-amber-200 bg-amber-50" : meta.card;
   return (
     <button
       type="button"
       onClick={() => onSelect(room)}
-      className={`flex flex-col gap-2 rounded-2xl border p-3 text-left transition active:scale-[0.98] ${meta.card} ${
+      className={`flex flex-col gap-2 rounded-2xl border p-3 text-left transition active:scale-[0.98] ${cardStyle} ${
         room.urgent ? "ring-2 ring-red-500" : ""
       }`}
     >
@@ -37,9 +40,10 @@ export function RoomCard({ room, now, onSelect }: RoomCardProps) {
 
       <StatusBadge status={room.status} />
 
-      {(room.service_type || room.do_not_disturb || room.guest_in_room) && (
+      {room.guest_in_room && <GuestBadge />}
+
+      {(room.service_type || room.do_not_disturb) && (
         <div className="flex flex-wrap gap-1">
-          {room.guest_in_room && <GuestBadge compact />}
           {room.service_type && <ServiceBadge type={room.service_type} />}
           {room.do_not_disturb && <DndBadge compact />}
         </div>
