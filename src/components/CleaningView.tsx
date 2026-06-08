@@ -43,7 +43,11 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
   const [composerOpen, setComposerOpen] = useState(false);
 
   const todo = useMemo(
-    () => rooms.filter((r) => NEEDS_WORK.includes(r.status)).sort(cleaningSort),
+    // Rooms with a guest still inside (reception flag) stay hidden until cleared.
+    () =>
+      rooms
+        .filter((r) => NEEDS_WORK.includes(r.status) && !r.guest_in_room)
+        .sort(cleaningSort),
     [rooms],
   );
 

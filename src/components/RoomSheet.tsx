@@ -171,6 +171,33 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
         )}
 
         {room.status !== "pulita" && (
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 p-4">
+            <div>
+              <p className="font-medium">Ospite in camera</p>
+              <p className="text-sm text-zinc-500">
+                Nascosta alle pulizie finché è presente.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={room.guest_in_room}
+              aria-label="Ospite in camera"
+              onClick={() => onUpdate({ guest_in_room: !room.guest_in_room })}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                room.guest_in_room ? "bg-amber-500" : "bg-zinc-300"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
+                  room.guest_in_room ? "left-[1.375rem]" : "left-0.5"
+                }`}
+              />
+            </button>
+          </div>
+        )}
+
+        {room.status !== "pulita" && (
           <div>
             <label htmlFor="room-note" className="mb-2 block text-sm font-medium text-zinc-500">
               Nota

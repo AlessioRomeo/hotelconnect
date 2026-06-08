@@ -11,12 +11,18 @@ create table if not exists public.rooms (
   service_type text
               check (service_type is null or service_type in ('fermata', 'partenza')),
   do_not_disturb boolean not null default false,
+  -- Reception-set: guest still in the room. Keeps it hidden from cleaning until
+  -- reception clears it. (Distinct from do_not_disturb, which cleaners set.)
+  guest_in_room boolean not null default false,
   note        text,
   updated_at  timestamptz not null default now(),
   updated_by  text check (updated_by in ('reception', 'pulizie')),
   sort_order  integer not null default 0,
   unique (room_group, name)
 );
+
+-- Added after initial release; safe to re-run for existing projects.
+alter table public.rooms add column if not exists guest_in_room boolean not null default false;
 
 create or replace function public.set_updated_at()
 returns trigger

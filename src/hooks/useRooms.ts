@@ -73,7 +73,14 @@ export function useRooms(enabled: boolean) {
       if (patch.status === "pulita") {
         // A clean room carries nothing over: a room note only lives while the
         // room needs cleaning. For a permanent note, use the Note tab instead.
-        next = { ...patch, urgent: false, service_type: null, do_not_disturb: false, note: null };
+        next = {
+          ...patch,
+          urgent: false,
+          service_type: null,
+          do_not_disturb: false,
+          guest_in_room: false,
+          note: null,
+        };
       } else if (patch.status === "in_pulizia") {
         next = { ...patch, do_not_disturb: false };
       }

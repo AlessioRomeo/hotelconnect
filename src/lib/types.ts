@@ -14,6 +14,7 @@ export interface Room {
   urgent: boolean;
   service_type: ServiceType | null;
   do_not_disturb: boolean;
+  guest_in_room: boolean;
   note: string | null;
   updated_at: string; // ISO timestamp
   updated_by: Role | null;
