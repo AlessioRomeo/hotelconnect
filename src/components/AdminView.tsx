@@ -54,19 +54,10 @@ export function AdminView({ onSignOut }: { onSignOut: () => void }) {
   const [composerOpen, setComposerOpen] = useState(false);
 
   const stats = useMemo(() => {
-    const by = {
-      pulita: 0,
-      da_pulire: 0,
-      in_pulizia: 0,
-      urgent: 0,
-      occupied: 0,
-      dnd: 0,
-    };
+    const by = { pulita: 0, da_pulire: 0, in_pulizia: 0, urgent: 0 };
     for (const r of rooms) {
       by[r.status]++;
       if (r.urgent) by.urgent++;
-      if (r.guest_in_room) by.occupied++;
-      if (r.do_not_disturb) by.dnd++;
     }
     return by;
   }, [rooms]);
@@ -173,38 +164,6 @@ export function AdminView({ onSignOut }: { onSignOut: () => void }) {
                 <StatTile label="Pulite" value={stats.pulita} status="pulita" />
                 <StatTile label="Urgenti" value={stats.urgent} swatch="bg-red-500" />
               </div>
-
-              <div className="card-shadow mt-3 rounded-2xl border border-zinc-200 bg-white p-4">
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <p className="font-medium text-zinc-600">Avanzamento pulizie</p>
-                  <p className="font-semibold tabular-nums">
-                    {stats.pulita}
-                    <span className="font-normal text-zinc-400"> / {rooms.length}</span>
-                  </p>
-                </div>
-                <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-zinc-100">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all"
-                    style={{
-                      width: `${rooms.length ? Math.round((stats.pulita / rooms.length) * 100) : 0}%`,
-                    }}
-                  />
-                </div>
-                {(stats.occupied > 0 || stats.dnd > 0) && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {stats.occupied > 0 && (
-                      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
-                        Occupate {stats.occupied}
-                      </span>
-                    )}
-                    {stats.dnd > 0 && (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
-                        Non disturbare {stats.dnd}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
             </section>
 
             <section>
@@ -213,11 +172,9 @@ export function AdminView({ onSignOut }: { onSignOut: () => void }) {
               </h2>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {groupStats.map((g) =>
-                  GROUP_META[g.group].single ? (
-                    <SingleSpaceCard key={g.group} group={g.group} rooms={g.rooms} />
-                  ) : (
-                    <GroupCard key={g.group} stat={g} />
-                  ),
+                  GROUP_META[g.group].single
+                    ? g.rooms.map((r) => <SingleSpaceCard key={r.id} room={r} />)
+                    : <GroupCard key={g.group} stat={g} />,
                 )}
               </div>
             </section>
@@ -398,27 +355,18 @@ function StatusCount({ status, value }: { status: RoomStatus; value: number }) {
   );
 }
 
-function SingleSpaceCard({ group, rooms }: { group: RoomGroup; rooms: Room[] }) {
+function SingleSpaceCard({ room }: { room: Room }) {
+  const meta = STATUS_META[room.status];
   return (
-    <div className="card-shadow rounded-2xl border border-zinc-200 bg-white p-4">
-      <p className="font-semibold">{GROUP_META[group].label}</p>
-      <ul className="mt-3 flex flex-col gap-2">
-        {rooms.map((r) => {
-          const meta = STATUS_META[r.status];
-          return (
-            <li key={r.id} className="flex items-center justify-between gap-2">
-              <span className="text-[15px] font-medium">{r.name}</span>
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${meta.card} ${meta.text}`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${meta.swatch}`} />
-                {meta.label}
-                {r.urgent && <span className="ml-0.5 text-red-600">· Urgente</span>}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+    <div className="card-shadow flex items-center justify-between gap-2 rounded-2xl border border-zinc-200 bg-white p-4">
+      <p className="font-semibold">{room.name}</p>
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${meta.card} ${meta.text}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${meta.swatch}`} />
+        {meta.label}
+        {room.urgent && <span className="ml-0.5 text-red-600">· Urgente</span>}
+      </span>
     </div>
   );
 }
