@@ -1,6 +1,6 @@
 import { SERVICE_META } from "@/lib/service";
 import type { ServiceType } from "@/lib/types";
-import { DoNotDisturbIcon, PersonIcon } from "./icons";
+import { CoffeeIcon, DoNotDisturbIcon, PersonIcon } from "./icons";
 
 export function ServiceBadge({ type }: { type: ServiceType }) {
   const meta = SERVICE_META[type];
@@ -18,6 +18,15 @@ export function GuestBadge() {
     <span className="inline-flex items-center gap-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
       <PersonIcon className="h-2.5 w-2.5 shrink-0" />
       Camera occupata
+    </span>
+  );
+}
+
+export function BreakfastBadge({ guests }: { guests: number | null }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+      <CoffeeIcon className="h-2.5 w-2.5 shrink-0" />
+      Colazione{guests ? ` · ${guests}` : ""}
     </span>
   );
 }

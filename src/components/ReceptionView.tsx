@@ -10,10 +10,13 @@ import { RoomCard } from "./RoomCard";
 import { RoomSheet } from "./RoomSheet";
 import { NotesPanel } from "./NotesPanel";
 import { NoteComposer } from "./NoteComposer";
-import { BottomNav, type Tab } from "./BottomNav";
+import { BottomNav } from "./BottomNav";
+import { GridIcon, NoteIcon } from "./icons";
 import { Toast } from "./Toast";
 
-type FilterKey = "all" | RoomStatus | "urgent";
+type Tab = "rooms" | "notes";
+
+type FilterKey = "all" | RoomStatus | "urgent" | "breakfast";
 
 const FILTERS: { key: FilterKey; label: string; dot?: string }[] = [
   { key: "all", label: "Tutte" },
@@ -21,6 +24,7 @@ const FILTERS: { key: FilterKey; label: string; dot?: string }[] = [
   { key: "in_pulizia", label: "In pulizia", dot: "bg-blue-500" },
   { key: "pulita", label: "Pulite", dot: "bg-emerald-500" },
   { key: "urgent", label: "Urgenti", dot: "bg-red-500" },
+  { key: "breakfast", label: "Colazione", dot: "bg-orange-400" },
 ];
 
 export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
@@ -33,10 +37,18 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
   const [composerOpen, setComposerOpen] = useState(false);
 
   const counts = useMemo(() => {
-    const by = { all: rooms.length, urgent: 0, pulita: 0, da_pulire: 0, in_pulizia: 0 };
+    const by = {
+      all: rooms.length,
+      urgent: 0,
+      breakfast: 0,
+      pulita: 0,
+      da_pulire: 0,
+      in_pulizia: 0,
+    };
     for (const r of rooms) {
       by[r.status]++;
       if (r.urgent) by.urgent++;
+      if (r.breakfast) by.breakfast++;
     }
     return by as Record<FilterKey, number>;
   }, [rooms]);
@@ -44,7 +56,13 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
   const openNotes = notes.notes.reduce((n, note) => n + (note.resolved_at ? 0 : 1), 0);
 
   const matches = (r: Room) =>
-    filter === "all" ? true : filter === "urgent" ? r.urgent : r.status === filter;
+    filter === "all"
+      ? true
+      : filter === "urgent"
+        ? r.urgent
+        : filter === "breakfast"
+          ? r.breakfast
+          : r.status === filter;
 
   const sections = GROUP_ORDER.map((group) => ({
     group,
@@ -132,10 +150,12 @@ export function ReceptionView({ onSignOut }: { onSignOut: () => void }) {
       </main>
 
       <BottomNav
-        tab={tab}
-        onTab={setTab}
-        roomsLabel="Camere"
-        notesCount={openNotes}
+        tabs={[
+          { key: "rooms", label: "Camere", icon: <GridIcon className="h-6 w-6" /> },
+          { key: "notes", label: "Note", icon: <NoteIcon className="h-6 w-6" />, badge: openNotes },
+        ]}
+        active={tab}
+        onSelect={setTab}
         onAddNote={tab === "rooms" ? () => setComposerOpen(true) : undefined}
       />
 

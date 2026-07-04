@@ -11,10 +11,12 @@ import type { Room, RoomStatus } from "@/lib/types";
 import { Toast } from "./Toast";
 import { NotesPanel } from "./NotesPanel";
 import { NoteComposer } from "./NoteComposer";
-import { BottomNav, type Tab } from "./BottomNav";
+import { BottomNav } from "./BottomNav";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ServiceBadge, DndBadge } from "./RoomTags";
-import { DoNotDisturbIcon } from "./icons";
+import { DoNotDisturbIcon, GridIcon, NoteIcon } from "./icons";
+
+type Tab = "rooms" | "notes";
 
 const NEEDS_WORK: RoomStatus[] = ["da_pulire", "in_pulizia"];
 
@@ -156,10 +158,12 @@ export function CleaningView({ onSignOut }: { onSignOut: () => void }) {
       )}
 
       <BottomNav
-        tab={tab}
-        onTab={setTab}
-        roomsLabel="Pulizie"
-        notesCount={openNotes}
+        tabs={[
+          { key: "rooms", label: "Pulizie", icon: <GridIcon className="h-6 w-6" /> },
+          { key: "notes", label: "Note", icon: <NoteIcon className="h-6 w-6" />, badge: openNotes },
+        ]}
+        active={tab}
+        onSelect={setTab}
         onAddNote={tab === "rooms" ? () => setComposerOpen(true) : undefined}
       />
 

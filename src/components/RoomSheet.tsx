@@ -5,7 +5,8 @@ import { GROUP_META } from "@/lib/groups";
 import { SERVICE_META, SERVICE_ORDER } from "@/lib/service";
 import { STATUS_META, STATUS_ORDER } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
-import type { Room } from "@/lib/types";
+import { ROLE_LABELS, type Room } from "@/lib/types";
+import { CoffeeIcon, MinusIcon, PlusIcon } from "./icons";
 import { DndBadge } from "./RoomTags";
 
 interface RoomSheetProps {
@@ -14,8 +15,6 @@ interface RoomSheetProps {
   onClose: () => void;
   onUpdate: (patch: Partial<Room>) => void;
 }
-
-const UPDATED_BY_LABEL = { reception: "Reception", pulizie: "Pulizie" } as const;
 
 export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
   const [note, setNote] = useState(room.note ?? "");
@@ -197,6 +196,79 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
           </div>
         )}
 
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <CoffeeIcon className="h-5 w-5 shrink-0 text-amber-600" />
+              <div>
+                <p className="font-medium">Colazione</p>
+                <p className="text-sm text-zinc-500">
+                  Visibile al servizio colazione.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={room.breakfast}
+              aria-label="Colazione"
+              onClick={() =>
+                onUpdate(
+                  room.breakfast
+                    ? { breakfast: false, breakfast_guests: null }
+                    : { breakfast: true, breakfast_guests: room.breakfast_guests ?? 2 },
+                )
+              }
+              className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                room.breakfast ? "bg-amber-500" : "bg-zinc-300"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
+                  room.breakfast ? "left-[1.375rem]" : "left-0.5"
+                }`}
+              />
+            </button>
+          </div>
+
+          {room.breakfast && (
+            <div className="mt-3 flex items-center justify-between gap-4 border-t border-amber-200/70 pt-3">
+              <p className="text-sm font-medium text-zinc-600">Ospiti</p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onUpdate({
+                      breakfast_guests: Math.max(1, (room.breakfast_guests ?? 2) - 1),
+                    })
+                  }
+                  disabled={(room.breakfast_guests ?? 2) <= 1}
+                  aria-label="Meno ospiti"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-amber-300 bg-white text-amber-700 transition active:scale-95 hover:bg-amber-50 disabled:opacity-40 disabled:active:scale-100"
+                >
+                  <MinusIcon className="h-4 w-4" />
+                </button>
+                <span className="w-6 text-center text-lg font-semibold tabular-nums">
+                  {room.breakfast_guests ?? 2}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onUpdate({
+                      breakfast_guests: Math.min(12, (room.breakfast_guests ?? 2) + 1),
+                    })
+                  }
+                  disabled={(room.breakfast_guests ?? 2) >= 12}
+                  aria-label="Più ospiti"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-amber-300 bg-white text-amber-700 transition active:scale-95 hover:bg-amber-50 disabled:opacity-40 disabled:active:scale-100"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {room.status !== "pulita" && (
           <div>
             <label htmlFor="room-note" className="mb-2 block text-sm font-medium text-zinc-500">
@@ -216,7 +288,7 @@ export function RoomSheet({ room, now, onClose, onUpdate }: RoomSheetProps) {
 
         <p className="text-center text-xs text-zinc-400">
           Aggiornata {timeAgo(room.updated_at, now)}
-          {room.updated_by && ` · ${UPDATED_BY_LABEL[room.updated_by]}`}
+          {room.updated_by && ` · ${ROLE_LABELS[room.updated_by]}`}
         </p>
       </div>
     </div>

@@ -8,12 +8,16 @@ import type { Role } from "@/lib/types";
 const ROLE_EMAILS: Record<Role, string> = {
   reception: process.env.NEXT_PUBLIC_RECEPTION_EMAIL!,
   pulizie: process.env.NEXT_PUBLIC_PULIZIE_EMAIL!,
+  colazione: process.env.NEXT_PUBLIC_COLAZIONE_EMAIL!,
+  admin: process.env.NEXT_PUBLIC_ADMIN_EMAIL!,
 };
 
 function roleFromEmail(email?: string | null): Role | null {
-  if (email === ROLE_EMAILS.reception) return "reception";
-  if (email === ROLE_EMAILS.pulizie) return "pulizie";
-  return null;
+  if (!email) return null;
+  const match = (Object.keys(ROLE_EMAILS) as Role[]).find(
+    (role) => ROLE_EMAILS[role] === email,
+  );
+  return match ?? null;
 }
 
 export function useAuth() {

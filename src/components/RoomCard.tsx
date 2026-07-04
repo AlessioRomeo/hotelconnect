@@ -3,7 +3,7 @@ import { STATUS_META } from "@/lib/status";
 import { timeAgo } from "@/lib/time";
 import type { Room } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
-import { ServiceBadge, DndBadge, GuestBadge } from "./RoomTags";
+import { ServiceBadge, BreakfastBadge, DndBadge, GuestBadge } from "./RoomTags";
 
 interface RoomCardProps {
   room: Room;
@@ -41,11 +41,12 @@ export function RoomCard({ room, now, onSelect }: RoomCardProps) {
 
       <StatusBadge status={room.status} />
 
-      {(room.service_type || room.do_not_disturb || room.guest_in_room) && (
+      {(room.service_type || room.do_not_disturb || room.guest_in_room || room.breakfast) && (
         <div className="flex flex-wrap gap-1">
           {room.guest_in_room && <GuestBadge />}
           {room.service_type && <ServiceBadge type={room.service_type} />}
           {room.do_not_disturb && <DndBadge compact />}
+          {room.breakfast && <BreakfastBadge guests={room.breakfast_guests} />}
         </div>
       )}
 

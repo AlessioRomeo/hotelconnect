@@ -1,21 +1,30 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { GridIcon, NoteIcon, PlusIcon } from "./icons";
+import { PlusIcon } from "./icons";
 
-export type Tab = "rooms" | "notes";
+export interface NavTab<K extends string> {
+  key: K;
+  label: string;
+  icon: ReactNode;
+  badge?: number;
+}
 
-interface BottomNavProps {
-  tab: Tab;
-  onTab: (tab: Tab) => void;
-  roomsLabel: string;
-  notesCount: number;
+interface BottomNavProps<K extends string> {
+  tabs: NavTab<K>[];
+  active: K;
+  onSelect: (tab: K) => void;
   onAddNote?: () => void;
 }
 
-// Bottom tab bar — the obvious, phone-friendly way to switch between the rooms
-// list and the notes. Kept separate from the top filters on purpose.
-export function BottomNav({ tab, onTab, roomsLabel, notesCount, onAddNote }: BottomNavProps) {
+// Bottom tab bar — the obvious, phone-friendly way to switch between a view's
+// sections. Kept separate from any top filters on purpose.
+export function BottomNav<K extends string>({
+  tabs,
+  active,
+  onSelect,
+  onAddNote,
+}: BottomNavProps<K>) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]">
       {/* Quick-add note floats a fixed gap above the bar. It's a child of the bar
@@ -32,19 +41,16 @@ export function BottomNav({ tab, onTab, roomsLabel, notesCount, onAddNote }: Bot
         </button>
       )}
       <div className="mx-auto flex w-full max-w-5xl">
-        <NavItem
-          active={tab === "rooms"}
-          onClick={() => onTab("rooms")}
-          label={roomsLabel}
-          icon={<GridIcon className="h-6 w-6" />}
-        />
-        <NavItem
-          active={tab === "notes"}
-          onClick={() => onTab("notes")}
-          label="Note"
-          icon={<NoteIcon className="h-6 w-6" />}
-          badge={notesCount}
-        />
+        {tabs.map((t) => (
+          <NavItem
+            key={t.key}
+            active={active === t.key}
+            onClick={() => onSelect(t.key)}
+            label={t.label}
+            icon={t.icon}
+            badge={t.badge}
+          />
+        ))}
       </div>
     </nav>
   );
