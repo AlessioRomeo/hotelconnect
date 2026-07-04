@@ -5,9 +5,9 @@ import { useNotes } from "@/hooks/useNotes";
 import { useRooms } from "@/hooks/useRooms";
 import { useShopping } from "@/hooks/useShopping";
 import { useTick } from "@/hooks/useTick";
-import { roomLabel } from "@/lib/groups";
+import { GROUP_META, GROUP_ORDER, roomLabel } from "@/lib/groups";
 import { STATUS_META } from "@/lib/status";
-import type { Room, RoomStatus } from "@/lib/types";
+import type { Room, RoomGroup, RoomStatus } from "@/lib/types";
 import { BottomNav } from "./BottomNav";
 import {
   CartIcon,
@@ -35,6 +35,16 @@ const dateFormat = new Intl.DateTimeFormat("it-IT", {
   month: "long",
 });
 
+const CLEAN_FLOW: RoomStatus[] = ["da_pulire", "in_pulizia", "pulita"];
+
+interface GroupStat {
+  group: RoomGroup;
+  rooms: Room[];
+  total: number;
+  counts: Record<RoomStatus, number>;
+  urgent: number;
+}
+
 export function AdminView({ onSignOut }: { onSignOut: () => void }) {
   const { rooms, loading } = useRooms(true);
   const notes = useNotes(true);
@@ -60,6 +70,25 @@ export function AdminView({ onSignOut }: { onSignOut: () => void }) {
     }
     return by;
   }, [rooms]);
+
+  const groupStats = useMemo<GroupStat[]>(
+    () =>
+      GROUP_ORDER.map((group) => {
+        const groupRooms = rooms.filter((r) => r.room_group === group);
+        const counts: Record<RoomStatus, number> = {
+          pulita: 0,
+          da_pulire: 0,
+          in_pulizia: 0,
+        };
+        let urgent = 0;
+        for (const r of groupRooms) {
+          counts[r.status]++;
+          if (r.urgent) urgent++;
+        }
+        return { group, rooms: groupRooms, total: groupRooms.length, counts, urgent };
+      }).filter((g) => g.total > 0),
+    [rooms],
+  );
 
   const breakfastRooms = useMemo(() => rooms.filter((r) => r.breakfast), [rooms]);
   const breakfastGuests = breakfastRooms.reduce(
@@ -174,6 +203,21 @@ export function AdminView({ onSignOut }: { onSignOut: () => void }) {
                       </span>
                     )}
                   </div>
+                )}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                Per categoria
+              </h2>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {groupStats.map((g) =>
+                  GROUP_META[g.group].single ? (
+                    <SingleSpaceCard key={g.group} group={g.group} rooms={g.rooms} />
+                  ) : (
+                    <GroupCard key={g.group} stat={g} />
+                  ),
                 )}
               </div>
             </section>
@@ -304,6 +348,77 @@ function StatTile({
         {label}
       </p>
       <p className="mt-1 text-3xl font-semibold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function GroupCard({ stat }: { stat: GroupStat }) {
+  const { group, total, counts, urgent } = stat;
+  return (
+    <div className="card-shadow rounded-2xl border border-zinc-200 bg-white p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="font-semibold">{GROUP_META[group].label}</p>
+        <p className="text-sm text-zinc-400">
+          <span className="font-semibold tabular-nums text-zinc-700">{counts.pulita}</span>
+          <span className="tabular-nums">/{total}</span> pulite
+        </p>
+      </div>
+
+      <div className="mt-3 flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-zinc-100">
+        {CLEAN_FLOW.map((s) =>
+          counts[s] > 0 ? (
+            <div key={s} className={STATUS_META[s].swatch} style={{ flexGrow: counts[s] }} />
+          ) : null,
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5">
+        {CLEAN_FLOW.map((s) =>
+          counts[s] > 0 ? <StatusCount key={s} status={s} value={counts[s]} /> : null,
+        )}
+        {urgent > 0 && (
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600">
+            <span className="h-2 w-2 rounded-full bg-red-500" />
+            <span className="tabular-nums">{urgent}</span> urgenti
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatusCount({ status, value }: { status: RoomStatus; value: number }) {
+  const meta = STATUS_META[status];
+  const label = status === "pulita" ? (value === 1 ? "Pulita" : "Pulite") : meta.label;
+  return (
+    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-600">
+      <span className={`h-2 w-2 rounded-full ${meta.swatch}`} />
+      <span className="tabular-nums">{value}</span> {label}
+    </span>
+  );
+}
+
+function SingleSpaceCard({ group, rooms }: { group: RoomGroup; rooms: Room[] }) {
+  return (
+    <div className="card-shadow rounded-2xl border border-zinc-200 bg-white p-4">
+      <p className="font-semibold">{GROUP_META[group].label}</p>
+      <ul className="mt-3 flex flex-col gap-2">
+        {rooms.map((r) => {
+          const meta = STATUS_META[r.status];
+          return (
+            <li key={r.id} className="flex items-center justify-between gap-2">
+              <span className="text-[15px] font-medium">{r.name}</span>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${meta.card} ${meta.text}`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${meta.swatch}`} />
+                {meta.label}
+                {r.urgent && <span className="ml-0.5 text-red-600">· Urgente</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
